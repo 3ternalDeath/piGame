@@ -42,8 +42,17 @@ main:
 
 @ Data section
 .section .data
-.global pixelMap
-pixelMap:
-
+.global gameState
+gameState:
+// game map 19*25 tiles, bytes(
+// paddleX, byte(tile number)
+// paddleY, byte(tile number)
+// paddleOffset, byte(0-TILE_WIDTH)
+// ballX, int(top left pixil)
+// ballY, int(top left pixil)
+// score, int
+// lives, int
+// win, byte
+// lose, byte
 
 
