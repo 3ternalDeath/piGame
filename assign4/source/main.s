@@ -2,23 +2,23 @@
 @ Code section
 .section .text
 
-	.equ	padX, 0
-	.equ	padOff0, 4
-	.equ	padOff1, 5
-	.equ	padOff2, 6
-	.equ	padOff3, 7
-	.equ	ballX, 8
-	.equ	ballY, 12
-	.equ	ballSpd, 16
-	.equ	ballAng, 17
-	.equ	ballDir, 18
-	.equ	ballAnc, 19
-	.equ	score, 20
-	.equ	lives, 24
-	.equ	win, 28
-	.equ	lose, 29
-	.equ	numBricks, 30
-	.equ	gameMap, 31
+	.equ	padX, 		0
+	.equ	padOff0, 	4
+	.equ	padOff1, 	5
+	.equ	padOff2, 	6
+	.equ	padOff3, 	7
+	.equ	ballX, 		8
+	.equ	ballY, 		12
+	.equ	ballSpd, 	16
+	.equ	ballAng, 	17
+	.equ	ballDir, 	18
+	.equ	ballAnc, 	19
+	.equ	score, 		20
+	.equ	lives, 		24
+	.equ	win, 		28
+	.equ	lose, 		29
+	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
+	.equ	gameMap, 	31
 
 .global main
 main:
@@ -46,6 +46,8 @@ main:
 	mov		r1, #200
 	bl		drawBall
 	
+	ldr		r0, =gameState
+	add		r0, #gameMap
 	@ stop
 	haltLoop$:
 		b	haltLoop$
@@ -55,7 +57,7 @@ main:
 initMap:
 		ldr		r0, =map1
 		ldr		r1, =gameState
-		add		r1, numBricks
+		add		r1, #numBricks
 		
 		ldr		r3, [r0], #1	@num bricks
 		str		r3, [r1], #1
