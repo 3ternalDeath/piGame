@@ -26,6 +26,8 @@ main:
 	ldr 		r0, =frameBufferInfo 	@ frame buffer information structure
 	bl		initFbInfo
 
+	bl		initMap
+
 	bl		drawBack
 	
 	mov		r0, #20
@@ -47,7 +49,7 @@ main:
 	bl		drawBall
 	
 	ldr		r0, =gameState
-	add		r0, #gameMap
+	add		r0, #numBricks
 	@ stop
 	haltLoop$:
 		b	haltLoop$
@@ -68,9 +70,11 @@ mapInitTop:
 		ldr		r3, [r0], #4
 		str		r3, [r1], #4
 		subs	r2, #1
-		beq		mapInitTop
+		bne		mapInitTop
 
 		bx		lr
+		
+		
 		
 firstMapDraw:
 		push	{r4-r5, lr}
