@@ -36,12 +36,6 @@ main:
 	mov		r1, #200
 	//bl		drawBall
 	
-	ldr		r0, =gameState
-	add		r0, #gameMap
-	
-	mov		r1, #0
-	//bl		drawTile
-	
 	@ stop
 	haltLoop$:
 		b	haltLoop$
@@ -95,14 +89,14 @@ mapInitTop:
 gameState:
 //NEED TO INIT SOME OF THESE
 
-	.int	300 			// paddleX
+	.int	300 			// paddleX(left most RELITIVE pixil)
 	.byte 	0, 0, 0, 0 		// paddleoff
-	.int 	0				// ballX(top left pixil)
-	.int	0				// ballY(top left pixil)
+	.int 	0				// ballX(top left RELITIVE pixil)
+	.int	0				// ballY(top left RELITIVE pixil)
 	.byte	1				// ballspeed
 	.byte	45				// ballangle
-	.byte	0				// balldirection
-							//  = up right, 2 = up left, 3 = down left, 4 = down right
+	.byte	1				// balldirection
+							@  1 = up right, 2 = up left, 3 = down left, 4 = down right
 	.byte	1				// ballanchor, 1 if anchored, 0 if not
 	.int	0				// score
 	.int	1				// lives

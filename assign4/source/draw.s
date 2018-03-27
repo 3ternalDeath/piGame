@@ -1,4 +1,18 @@
 
+////////////////CONFIG////////////////////////
+
+.equ	TOP_LEFT_X,	100
+.equ	TOP_LEFT_Y, 100
+.equ	PADDLE_SIZE_DEFAULT, 40
+.equ	PADDLE_HIGHT, 50
+.equ	BALL_SIZE, 15
+
+/////////////////CONFIG ENDS///////////////////
+
+	.equ	topLeftXGame, TOP_LEFT_X
+	.equ	topLeftYGame, TOP_LEFT_Y + 50 //for printing score and lives
+	.equ	paddleY, (TOP_LEFT_Y + (25*32)) - PADDLE_HIGHT
+
 @ Contains the draw functions
 
 .text
@@ -10,16 +24,17 @@ drawBall:
 	@ r0 - x pos relative to game
 	@ r1 - y pos relative to game
 	
-	push	{ r4-r8, lr }
+	push	{ r4-r5, lr }
 	
-	mov 	r5, #1100
+	mov 	r5, #topLeftXGame
 	add		r0, r5
-	add 	r1, #100
+	mov		r5, #topLeftYGame
+	add 	r1, r5
 	ldr		r2, =0xFFFFFF
-	mov		r3, #20
-	mov		r4, #20
+	mov		r3, #BALL_SIZE
+	mov		r4, #BALL_SIZE
 	bl 		drawBox
-	pop		{ r4-r8, pc }
+	pop		{ r4-r5, pc }
 	
 
 .global drawPaddle
@@ -28,18 +43,18 @@ drawPaddle:
 	
 	push	{ r4-r8, lr }
 	
-	mov		r5, #1100
+	mov		r5, #topLeftXGame
 	add		r0, r5
 	
-	mov		r1, #600
+	mov		r1, #paddleY
 	ldr		r2, =0xCCBBDD
-	mov		r3, #125
-	mov		r4, #20
+	mov		r3, #PADDLE_SIZE_DEFAULT
+	mov		r4, #10
 	bl		drawBox
 	
 	pop		{ r4-r8, pc }
 	
-.global drawBrick
+@Deprecated
 drawBrick:
 	@ r0 - x pos relative to game
 	@ r1 - y pos relative to game
@@ -48,23 +63,24 @@ drawBrick:
 	@ r4 - length
 	push	{ r4-r8, lr }
 	
-	mov		r5, #1100
+	mov		r5, #topLeftXGame
 	add		r0, r5
-	add		r1, r1, #100
+	mov		r5, #topLeftYGame
+	add		r1, r5
 	mov		r3, #50
 	mov		r4, #25
 	bl		drawBox
 	
 	pop 	{ r4-r8, pc }
 
-.global drawBack
+@Deprecated
 drawBack:
 	push	{ r4-r8, lr }
-	mov		r0, #1100		@ x
-	mov		r1, #100		@ y	
-	ldr		r2, =0x0 		@ Black
-	mov		r3, #800		@ width
-	mov		r4, #600		@ length
+	mov		r0, #topLeftXGame		@ x
+	mov		r1, #topLeftYGame		@ y	
+	ldr		r2, =0x0 			@ Black
+	mov		r3, #800			@ width
+	mov		r4, #600			@ length
 	bl		drawBox
 	
 	pop		{ r4-r8, pc }
@@ -104,8 +120,8 @@ Tile_FindTest:
 	mul		r0, r4			// Find the pixel co-ords
 	mul		r1, r4		
 	
-	add		r0, #100		// r1 is y-coord
-	add		r1, #100			// r0 is x-coord
+	add		r0, #topLeftXGame			// r1 is y-coord
+	add		r1, #topLeftYGame			// r0 is x-coord
 	
 	mov		r3, r4			// Set length and width to 32
 	
