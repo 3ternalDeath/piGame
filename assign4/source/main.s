@@ -27,35 +27,49 @@ main:
 	bl		initFbInfo
 
 	bl		initMap
-
-	bl		drawBack
 	
-	mov		r0, #20
-	mov		r1, #30
-	ldr		r2, =0xFFF00FF
-	bl		drawBrick
-	
-	mov		r0, #75
-	mov		r1, #30
-	ldr		r2, =0xFFF00FFF
-	bl		drawBrick
-
-	
+	bl		firstMapDraw
 	mov		r0, #300
-	bl		drawPaddle
+	//bl		drawPaddle
 	
 	mov		r0, #300
 	mov		r1, #200
-	bl		drawBall
+	//bl		drawBall
 	
 	ldr		r0, =gameState
-	add		r0, #numBricks
+	add		r0, #gameMap
+	
+	mov		r1, #0
+	bl		drawTile
+	
 	@ stop
 	haltLoop$:
 		b	haltLoop$
 		
 
+firstMapDraw:
+	push { r4, r5, lr }
+	ldr		r4, =gameState
+	add		r4, #gameMap
 	
+	mov		r5, #1		// last tile element
+	
+	//	Draw each tile
+first_top:
+	mov 	r0, r4
+	mov		r1, r5
+	bl 		drawTile
+	
+first_test:	
+	subs	r5, #1		// Decrement counter and set flags
+	bNE		first_top
+	
+	mov		r0, r4
+	mov		r1, r5
+	bl		drawTile	// Draw final tile
+	pop	{ r4, r5, lr }
+	
+
 initMap:
 		ldr		r0, =map1
 		ldr		r1, =gameState
@@ -73,19 +87,7 @@ mapInitTop:
 		bne		mapInitTop
 
 		bx		lr
-		
-		
-		
-firstMapDraw:
-		push	{r4-r5, lr}
-		
-		mov		r4, #0
-		mov		r5, #0
-		
-outerTop:
-		
-		
-		pop		{r4-r5, lr}
+
 
 @ Data section
 .section .data

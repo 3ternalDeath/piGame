@@ -81,34 +81,37 @@ drawTile:
 // if == 2 draw red
 // if == 1 draw orange-yellow
 	
-	push	{r4, lr}
+	push	{r4, r5, lr}
 	
-	ldr 	r2, [r0, r1]
+	ldrb 	r5, [r0, r1]
 
+	mov		r0, r1
+	mov		r1, #0
 	b 	Tile_FindTest
 	
 // r0 becomes the nth row
 // r1 becomes the nth column
 
+	
 Tile_FindTop:
-	add		r0, #1
-	sub 	r1, #20
+	add		r1, #1
+	sub 	r0, #20
 Tile_FindTest:
-	cmp 	r1, #20
+	cmp 	r0, #20
 	bGT 	Tile_FindTop
 	
 	mov		r4, #32
 	mul		r0, r4			// Find the pixel co-ords
 	mul		r1, r4		
 	
-	add		r0, #100		// r0 is y-coord
+	add		r0, #100		// r1 is y-coord
 	mov		r3, #1100
-	add		r1, r3			// r1 is x-coord
+	add		r1, r3			// r0 is x-coord
 	
 	mov		r3, r4			// Set length and width to 32
 	
 	// Check if tile is a wall
-	cmp		r2, #255 
+	cmp		r5, #255 
 	bNE		Tile_next1
 	
 	ldr		r2, =0xFF6B6B6B		// Grey
@@ -117,7 +120,7 @@ Tile_FindTest:
 	
 	// Check if tile is a floor
 Tile_next1:
-	cmp		r2, #0
+	cmp		r5, #0
 	bNE		Tile_next2
 	
 	ldr		r2, =0xFF000000		// Black
@@ -126,7 +129,7 @@ Tile_next1:
 
 	// Check if brick has 4 strength
 Tile_next2:
-	cmp		r2, #4
+	cmp		r5, #4
 	bNE		Tile_next3
 	
 	ldr		r2, =0xFF79199C 	// Purple
@@ -136,7 +139,7 @@ Tile_next2:
 	
 	// Check if brick has 3 strength
 Tile_next3:
-	cmp		r2, #3
+	cmp		r5, #3
 	bNE		Tile_next4
 	
 	ldr		r2, =0xFF0F15BA		// Blue
@@ -145,7 +148,7 @@ Tile_next3:
 	
 	// Check if brick has 2 strength
 Tile_next4:
-	cmp		r2, #2
+	cmp		r5, #2
 	bNE		Tile_next5
 	
 	ldr		r2, =0xFFCC2D30		// Red
@@ -159,7 +162,7 @@ Tile_next5:
 	bl		drawBox
 Tile_end:
 	
-	pop { r4, pc }
+	pop { r4, r5, pc }
 
 	
 	
