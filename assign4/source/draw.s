@@ -37,17 +37,23 @@ drawBall:
 	pop		{ r4-r5, pc }
 	
 
+.global unDrawPaddle
+unDrawPaddle:
+	ldr		r2, =0xFF000000
+	b		paddle
+
 .global drawPaddle
 drawPaddle:
 	@ r0 - x pos relative to game
-	
+	ldr		r2, =0xCCBBDD
+paddle:	
 	push	{ r4-r8, lr }
 	
 	mov		r5, #topLeftXGame
 	add		r0, r5
 	
 	mov		r1, #paddleY
-	ldr		r2, =0xCCBBDD
+	
 	mov		r3, #PADDLE_SIZE_DEFAULT
 	mov		r4, #10
 	bl		drawBox

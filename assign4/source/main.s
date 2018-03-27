@@ -25,21 +25,48 @@ main:
 	@ ask for frame buffer information
 	ldr 		r0, =frameBufferInfo 	@ frame buffer information structure
 	bl		initFbInfo
+	bl		snesSetup
+
+//MAIN MENUE STUFF HERE
 
 	bl		initMap
 	
 	bl		firstMapDraw
 	mov		r0, #300
-	//bl		drawPaddle
+	bl		drawPaddle
 	
 	mov		r0, #300
-	mov		r1, #200
-	//bl		drawBall
+	mov		r1, #600
+	bl		drawBall
 	
+mainGameLoop:
+	bl		Read_SNES
+	ORRs	r0, #0
+	blNE		buttonPressedGame
+	//b moveball?
+	b		mainGameLoop
 	@ stop
 	haltLoop$:
 		b	haltLoop$
 		
+
+buttonPressedGame:
+	push	{r4, lr}
+	
+	mov		r4, r0
+	
+	tst		r0, #0x10
+	beq		prsNxt1
+	//MOVE PADDLE RIGHT
+	
+prsNxt1:
+	tst		r0, #0x20
+	beq		prsNxt2
+	//MOVE PADDLE LEFT
+	
+prsNxt2:
+	pop		{r4, pc}
+
 
 firstMapDraw:
 	push { r4, r5, lr }
