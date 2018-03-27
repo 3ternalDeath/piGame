@@ -10,7 +10,7 @@
 //9 = valPk2, 1 more hit
 .global map1
 map1:
-	//.byte	162
+	.byte	162
 	
 	//first line of tiles
 	.rept 20 
@@ -30,7 +30,7 @@ map1:
 	//2 lines of HARD bricks
 	.rept	2
 		.byte 	255
-		.rept 	1
+		.rept 	18
 			.byte	4 
 		.endr
 		.byte	255
