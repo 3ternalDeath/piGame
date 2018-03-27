@@ -40,7 +40,7 @@ main:
 	add		r0, #gameMap
 	
 	mov		r1, #0
-	bl		drawTile
+	//bl		drawTile
 	
 	@ stop
 	haltLoop$:
@@ -52,7 +52,7 @@ firstMapDraw:
 	ldr		r4, =gameState
 	add		r4, #gameMap
 	
-	mov		r5, #1		// last tile element
+	mov		r5, #499		// last tile element
 	
 	//	Draw each tile
 first_top:

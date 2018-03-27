@@ -98,15 +98,14 @@ Tile_FindTop:
 	sub 	r0, #20
 Tile_FindTest:
 	cmp 	r0, #20
-	bGT 	Tile_FindTop
+	bGE 	Tile_FindTop
 	
 	mov		r4, #32
 	mul		r0, r4			// Find the pixel co-ords
 	mul		r1, r4		
 	
 	add		r0, #100		// r1 is y-coord
-	mov		r3, #1100
-	add		r1, r3			// r0 is x-coord
+	add		r1, #100			// r0 is x-coord
 	
 	mov		r3, r4			// Set length and width to 32
 	
@@ -196,7 +195,7 @@ drawBox:
 	addNE	r5, #1
 	bNE		box_top
 	
-	pop { r4-r8, pc }
+	pop { r4-r8, pc } 
 
 .global drawHLine
 drawHLine:
