@@ -3,7 +3,7 @@
 
 .equ	TOP_LEFT_X,	100
 .equ	TOP_LEFT_Y, 100
-.equ	PADDLE_SIZE_DEFAULT, 40
+.equ	PADDLE_SIZE_DEFAULT, 100
 .equ	PADDLE_HIGHT, 50
 .equ	BALL_SIZE, 15
 
@@ -17,7 +17,7 @@
 
 .text
 
-
+//////////////////////////////////////////////////
 .global drawBall
 drawBall:
 	// I cant think of a good way to draw it as a ball right now
@@ -32,11 +32,10 @@ drawBall:
 	add 	r1, r5
 	ldr		r2, =0xFFFFFF
 	mov		r3, #BALL_SIZE
-	mov		r4, #BALL_SIZE
-	bl 		drawBox
+	bl 		drawSquare
 	pop		{ r4-r5, pc }
 	
-
+/////////////////////////////////////////////////////
 .global unDrawPaddle
 unDrawPaddle:
 	ldr		r2, =0xFF000000
@@ -55,11 +54,30 @@ paddle:
 	mov		r1, #paddleY
 	
 	mov		r3, #PADDLE_SIZE_DEFAULT
-	mov		r4, #10
-	bl		drawBox
+	mov		r8, #10	// height counter
+
+
+	mov 	r4, r0	// x
+	mov 	r5, r1	// y
+	mov 	r6, r2	// colour
+	mov 	r7, r3 	// width
+
 	
-	pop		{ r4-r8, pc }
+	paddle_top:
 	
+	mov 	r0, r4
+	mov 	r1, r5
+	mov 	r2, r6
+	mov		r3, r7
+	
+	bl		drawHLine
+	
+	subs	r8, #1
+	addNE	r5, #1
+	bNE		paddle_top
+	
+	pop { r4-r8, pc } 
+////////////////////////////////////////////////////////	
 @Deprecated
 drawBrick:
 	@ r0 - x pos relative to game
@@ -75,10 +93,10 @@ drawBrick:
 	add		r1, r5
 	mov		r3, #50
 	mov		r4, #25
-	bl		drawBox
+	bl		drawSquare
 	
 	pop 	{ r4-r8, pc }
-
+//////////////////////////////////////////////////////////
 @Deprecated
 drawBack:
 	push	{ r4-r8, lr }
@@ -87,11 +105,11 @@ drawBack:
 	ldr		r2, =0x0 			@ Black
 	mov		r3, #800			@ width
 	mov		r4, #600			@ length
-	bl		drawBox
+	bl		drawSquare
 	
 	pop		{ r4-r8, pc }
 
-
+//////////////////////////////////////////////////////////////
 .global drawTile
 drawTile:
 // r0 = address of tile array
@@ -122,21 +140,21 @@ Tile_FindTest:
 	cmp 	r0, #20
 	bGE 	Tile_FindTop
 	
-	mov		r4, #32
-	mul		r0, r4			// Find the pixel co-ords
-	mul		r1, r4		
+	mov		r3, #32			// Set size of tile to 32 pixels
+	mul		r0, r3			// Find the pixel co-ords
+	mul		r1, r3		
 	
 	add		r0, #topLeftXGame			// r1 is y-coord
 	add		r1, #topLeftYGame			// r0 is x-coord
 	
-	mov		r3, r4			// Set length and width to 32
+
 	
 	// Check if tile is a wall
 	cmp		r5, #255 
 	bNE		Tile_next1
 	
 	ldr		r2, =0xFF6B6B6B		// Grey
-	bl		drawBox
+	bl		drawSquare
 	b		Tile_end
 	
 	// Check if tile is a floor
@@ -145,7 +163,7 @@ Tile_next1:
 	bNE		Tile_next2
 	
 	ldr		r2, =0xFF000000		// Black
-	bl		drawBox
+	bl		drawSquare
 	b		Tile_end
 
 	// Check if brick has 4 strength
@@ -154,7 +172,7 @@ Tile_next2:
 	bNE		Tile_next3
 	
 	ldr		r2, =0xFF79199C 	// Purple
-	bl		drawBox
+	bl		drawSquare
 	b		Tile_end
 	
 	
@@ -164,7 +182,7 @@ Tile_next3:
 	bNE		Tile_next4
 	
 	ldr		r2, =0xFF0F15BA		// Blue
-	bl		drawBox
+	bl		drawSquare
 	b		Tile_end
 	
 	// Check if brick has 2 strength
@@ -173,35 +191,34 @@ Tile_next4:
 	bNE		Tile_next5
 	
 	ldr		r2, =0xFFCC2D30		// Red
-	bl		drawBox
+	bl		drawSquare
 	b		Tile_end
 	
 	// Brick has 1 strength
 Tile_next5:
 
 	ldr		r2, =0xFFBAAF12
-	bl		drawBox
+	bl		drawSquare
 Tile_end:
 	
 	pop { r4, r5, pc }
 
+//////////////////////////////////////////////////////////////////////	
 	
-	
-.global drawBox	
-drawBox:	
+.global drawSquare	
+drawSquare:	
 @ r0 - top left x co-ordinate
 @ r1 - top left y co-ordinate
 @ r2 - colour
-@ r3 - Width
-@ r4 - Length
-	
+@ r3 - Size
+
 	push { r4-r8, lr }
 	
-	mov		r8, r4	// height counter
 	mov 	r4, r0	// x
 	mov 	r5, r1	// y
 	mov 	r6, r2	// colour
 	mov 	r7, r3 	// width
+	mov		r8, r3 // height counter
 	
 	
 	box_top:
@@ -218,7 +235,7 @@ drawBox:
 	bNE		box_top
 	
 	pop { r4-r8, pc } 
-
+////////////////////////////////////////////////////////////////////
 .global drawHLine
 drawHLine:
 @ r0 - x
@@ -247,7 +264,7 @@ drawHLine:
 	
 	
 	pop { r4-r7, pc }
-	
+/////////////////////////////////////////////////////////	
 .global drawVLine
 drawVLine:
 @ r0 - x
@@ -280,7 +297,7 @@ drawVLine:
 	bNE		lineV_top
 	pop { r4-r8, pc }
 
-
+/////////////////////////////////////////////////////
 @ Draw Pixel
 @  r0 - x
 @  r1 - y
@@ -309,7 +326,7 @@ DrawPixel:
 
 	pop		{r4, r5, r6}
 	bx		lr
-
+////////////////////////////////////////////////////////
 
 
 .data

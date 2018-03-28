@@ -15,7 +15,7 @@
 	.equ	ballAnc, 	19
 	.equ	score, 		20
 	.equ	lives, 		24
-	.equ	win, 		28
+	.equ	event, 		28
 	.equ	lose, 		29
 	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
 	.equ	gameMap, 	31
@@ -42,31 +42,86 @@ main:
 mainGameLoop:
 	bl		Read_SNES
 	ORRs	r0, #0
-	blNE		buttonPressedGame
-	//b moveball?
+	
+	b		update
+  
+    
+    mov 	r0, #1000
+    bl		delayMicroseconds
+    
 	b		mainGameLoop
 	@ stop
 	haltLoop$:
 		b	haltLoop$
 		
-
-buttonPressedGame:
+///////////////////////////////////////////////////////
+update:
 	push	{r4, lr}
 	
 	mov		r4, r0
+	mov		r0, #0
 	
-	tst		r0, #0x10
-	beq		prsNxt1
-	//MOVE PADDLE RIGHT
-	
-prsNxt1:
-	tst		r0, #0x20
-	beq		prsNxt2
-	//MOVE PADDLE LEFT
-	
-prsNxt2:
-	pop		{r4, pc}
+	tst		r4, #0x8		//A
+	moveq	r1, #1			//speed 1
+	movne	r2, #2			//speed 2
 
+	tst		r4, #0x10		//RIGHT
+	movne	r0, #1
+	
+	tst		r4, #0x20		//LEFT
+	movne	r0, #-1
+	
+							//left and right are mutually exclusive due to
+							//construction of snes
+	bl		mvPaddle					
+	
+	
+	pop		{r4, pc}
+//////////////////////////////////////////////////////
+mvPaddle:
+	@ r0 - direction: -1, 0, 1
+	@ r1 - speed/amt of loop
+	cmp		r0, #0
+	bxeq	lr
+	cmp		r1, #0				//insta return conditions
+	bxle	lr
+	
+	push	{r4-r7, lr}
+	mov		r4, r0
+	mov		r5, r1
+	
+	ldr		r6, =gameState
+	ldr		r0, [r6, #padX]
+	bl		unDrawPaddle
+	
+paddleTop:
+	
+	ldr		r7, [r6, #padX]		//Left edge
+	
+	cmp		r4, #0
+	blt		mvPadLft
+	ldr		r0, [r6, #padOff3]
+	add		r0, r7				//Right edge
+	add		r7, #1				//+1
+	// TODO: CHECK IF TILE OF R1 IS WALL
+	// IF NOT
+	str		r7, [r6, #padX]
+	b		mvPaddleTest
+	// IF YES b mvPadRet, revert r7
+mvPadLft:
+	sub		r7, #1
+	// TODO: CHECK IF BLAH R0 IS WALL
+	str		r7, [r6, #padX]
+	
+mvPaddleTest:
+	subs	r5, #1
+	bNE		paddleTop
+	
+mvPadRet:
+	mov		r0, r7
+	bl		drawPaddle
+	pop		{r4-r7, lr}
+////////////////////////////////////////////////////
 
 firstMapDraw:
 	push { r4, r5, lr }
@@ -90,7 +145,7 @@ first_test:
 	bl		drawTile	// Draw final tile
 	pop	{ r4, r5, lr }
 	
-
+///////////////////////////////////////////////////////
 initMap:
 		ldr		r0, =map1
 		ldr		r1, =gameState
@@ -108,6 +163,7 @@ mapInitTop:
 		bne		mapInitTop
 
 		bx		lr
+////////////////////////////////////////////////	
 
 
 @ Data section
