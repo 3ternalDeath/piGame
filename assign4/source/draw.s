@@ -4,8 +4,10 @@
 .equ	TOP_LEFT_X,	100
 .equ	TOP_LEFT_Y, 100
 .equ	PADDLE_SIZE_DEFAULT, 100
+.equ	PADDLE_SIZE_POWERUP, 200
 .equ	PADDLE_HIGHT, 50
 .equ	BALL_SIZE, 15
+.equ	TILE_SIZE, 32
 
 /////////////////CONFIG ENDS///////////////////
 
@@ -81,8 +83,13 @@ paddle:
 .global checkTilePaddle
 checkTilePaddle:
 	push	{lr}
-	mov		r1, #paddleY
-	bl		cordToTile
+	cmp		r0, #TILE_SIZE
+	movLE	r0, #-1
+	mov		r1, #TILE_SIZE
+	mov		r2, #19
+	mul		r1, r2
+	cmp		r0, r1
+	movGE	r0, #-1
 	pop		{pc}
 ////////////////////////////////////////////////////////	
 @Deprecated
@@ -147,7 +154,7 @@ Tile_FindTest:
 	cmp 	r0, #20
 	bGE 	Tile_FindTop
 	
-	mov		r3, #32			// Set size of tile to 32 pixels
+	mov		r3, #TILE_SIZE	// Set size of tile to 32 pixels
 	mul		r0, r3			// Find the pixel co-ords
 	mul		r1, r3			//CAN LSL 5 FOR EFFICIENCY
 	
@@ -158,8 +165,11 @@ Tile_FindTest:
 	
 	// Check if tile is a wall
 	cmp		r5, #255 
+	bEQ		wall
+	cmp		r5, #254
 	bNE		Tile_next1
 	
+wall:
 	ldr		r2, =0xFF6B6B6B		// Grey
 	bl		drawSquare
 	b		Tile_end

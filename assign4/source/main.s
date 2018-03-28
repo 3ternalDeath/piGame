@@ -20,10 +20,11 @@
 	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
 	.equ	gameMap, 	31
 
+////////////////////////////////////////////////////
 .global main
 main:
 	@ ask for frame buffer information
-	ldr 		r0, =frameBufferInfo 	@ frame buffer information structure
+	ldr 	r0, =frameBufferInfo 	@ frame buffer information structure
 	bl		initFbInfo
 	bl		snesSetup
 
@@ -32,12 +33,7 @@ main:
 	bl		initMap
 	
 	bl		firstMapDraw
-	mov		r0, #300
-	bl		drawPaddle
 	
-	mov		r0, #300
-	mov		r1, #600
-	bl		drawBall
 	
 mainGameLoop:
 	bl		Read_SNES
@@ -46,7 +42,7 @@ mainGameLoop:
 	bl		update
   
     
-    mov 	r0, #4000
+    mov 	r0, #8000
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -62,8 +58,8 @@ update:
 	mov		r0, #0
 	
 	tst		r4, #0x8		//A
-	moveq	r1, #2			//speed 1
-	movne	r2, #3			//speed 2
+	moveq	r1, #4			//speed 1
+	movne	r2, #5			//speed 2
 
 	tst		r4, #0x10		//RIGHT
 	movne	r0, #1
@@ -73,11 +69,81 @@ update:
 	
 							//left and right are mutually exclusive due to
 							//construction of snes
-	bl		mvPaddle					
+	//MUST MOVE PADDLE FIRST
+	bl		mvPaddle		
+	//OTHER MOVES
 	
+				
+	//MUST MOVE BALL LAST
+	bl		mvBall
 	
 	pop		{r4, pc}
+//////////////////////////////////////////////
+mvBall:
+	
+	bx		lr
+/////////////////////////////////////////////
+bounceRev:
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	cmp		r1, #1
+	movLE	r2, #3
+	
+	cmp		r1, #2
+	movEQ	r2, #4
+	
+	cmp		r1, #3
+	movEQ	r2, #1
+	
+	cmp		r1, #4
+	movGE	r2, #2
+	
+	str		r2, [r0, #ballDir]
+	
+	bx		lr
+//////////////////////////////////////////////////
+bounceVert:
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	cmp		r1, #1
+	movLE	r2, #4
+	
+	cmp		r1, #2
+	movEQ	r2, #3
+	
+	cmp		r1, #3
+	movEQ	r2, #2
+	
+	cmp		r1, #4
+	movGE	r2, #1
+	
+	str		r2, [r0, #ballDir]
+	
+	bx		lr
 //////////////////////////////////////////////////////
+bounceHori: @1 = up right, 2 = up left, 3 = down left, 4 = down right
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	cmp		r1, #1
+	movLE	r2, #2
+	
+	cmp		r1, #2
+	movEQ	r2, #1
+	
+	cmp		r1, #3
+	movEQ	r2, #4
+	
+	cmp		r1, #4
+	movGE	r2, #3
+	
+	str		r2, [r0, #ballDir]
+	
+	bx		lr
+	
+/////////////////////////////////////////////////
 mvPaddle:
 	@ r0 - direction: -1, 0, 1
 	@ r1 - speed/amt of loop
@@ -100,14 +166,13 @@ paddleTop:
 	
 	cmp		r4, #0
 	blt		mvPadLft
-	ldr		r0, [r6, #padOff3]
+mvPadRgt:
+	ldrb	r0, [r6, #padOff3]
 	add		r7, #1
 	add		r0, r7				//Right edge +1
 	
 	bl		checkTilePaddle
-	add		r1, r6, #gameMap
-	ldr		r1, [r1, r0]
-	cmp		r1, #255			//if tile wall
+	cmp		r0, #-1			//if tile wall
 	subeq	r7, #1
 	beq		mvPadRet
 	str		r7, [r6, #padX]		// if not
@@ -118,9 +183,7 @@ mvPadLft:
 	mov		r0, r7
 	
 	bl		checkTilePaddle
-	add		r1, r6, #gameMap
-	ldr		r1, [r1, r0]
-	cmp		r1, #255			//if tile wall
+	cmp		r0, #-1			//if tile wall
 	addeq	r7, #1
 	beq		mvPadRet
 	str		r7, [r6, #padX]
@@ -166,6 +229,15 @@ first_test:
 	mov		r0, r4
 	mov		r1, r5
 	bl		drawTile	// Draw final tile
+	
+	sub		r4, #gameMap
+	ldr		r0, [r4, #padX]
+	bl		drawPaddle
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	bl		drawBall
+	
 	pop	{ r4, r5, lr }
 	
 ///////////////////////////////////////////////////////
@@ -195,10 +267,10 @@ mapInitTop:
 gameState:
 //NEED TO INIT SOME OF THESE
 
-	.int	300 			// paddleX(left most RELITIVE pixil)
-	.byte 	0, 0, 0, 0 		// paddleoff
-	.int 	0				// ballX(top left RELITIVE pixil)
-	.int	0				// ballY(top left RELITIVE pixil)
+	.int	350				// paddleX(left most RELITIVE pixil)
+	.byte 	25, 50, 75, 100	// paddleoff
+	.int 	300				// ballX(top left RELITIVE pixil)
+	.int	600				// ballY(top left RELITIVE pixil)
 	.byte	1				// ballspeed
 	.byte	45				// ballangle
 	.byte	1				// balldirection

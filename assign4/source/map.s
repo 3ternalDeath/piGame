@@ -1,6 +1,7 @@
 .section .text
 //0 = floor
 //255 = wall
+//254 = roof
 //1 = brick, 1 more hit
 //2 = brick, 2 more hits
 //3 = brick, 3 more hits
@@ -14,7 +15,7 @@ map1:
 	
 	//first line of tiles
 	.rept 20 
-		.byte 255 
+		.byte 254 
 	.endr
 	//first line of tiles
 	
