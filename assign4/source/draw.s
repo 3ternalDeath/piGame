@@ -1,11 +1,10 @@
 
 ////////////////CONFIG////////////////////////
 
-.equ	TOP_LEFT_X,	100
-.equ	TOP_LEFT_Y, 100
+.equ	TOP_LEFT_X,	50
+.equ	TOP_LEFT_Y, 50
 .equ	PADDLE_SIZE_DEFAULT, 100
 .equ	PADDLE_SIZE_POWERUP, 200
-.equ	PADDLE_HIGHT, 50
 .equ	BALL_SIZE, 15
 .equ	TILE_SIZE, 32
 
@@ -13,41 +12,47 @@
 
 	.equ	topLeftXGame, TOP_LEFT_X
 	.equ	topLeftYGame, TOP_LEFT_Y + 50 //for printing score and lives
-	.equ	paddleY, (TOP_LEFT_Y + (25*32)) - PADDLE_HIGHT
+	.equ	paddleY, (TOP_LEFT_Y + (25*TILE_SIZE)) - 50 //50 is the hight of the paddle
 
 @ Contains the draw functions
 
 .text
 
 //////////////////////////////////////////////////
+.global unDrawBall
+unDrawBall:
+	ldr		r2, =0xFF000000
+	b		actualDrawBall
 .global drawBall
 drawBall:
 	// I cant think of a good way to draw it as a ball right now
 	@ r0 - x pos relative to game
 	@ r1 - y pos relative to game
 	
-	push	{ r4-r5, lr }
-	
-	mov 	r5, #topLeftXGame
-	add		r0, r5
-	mov		r5, #topLeftYGame
-	add 	r1, r5
 	ldr		r2, =0xFFFFFF
+	
+actualDrawBall:
+	push	{ r4, lr }
+	
+	mov 	r4, #topLeftXGame
+	add		r0, r4
+	mov		r4, #topLeftYGame
+	add 	r1, r4
 	mov		r3, #BALL_SIZE
 	bl 		drawSquare
-	pop		{ r4-r5, pc }
+	pop		{ r4, pc }
 	
 /////////////////////////////////////////////////////
 .global unDrawPaddle
 unDrawPaddle:
 	ldr		r2, =0xFF000000
-	b		paddle
+	b		actualDrawPaddle
 
 .global drawPaddle
 drawPaddle:
 	@ r0 - x pos relative to game
 	ldr		r2, =0xCCBBDD
-paddle:	
+actualDrawPaddle:	
 	push	{ r4-r8, lr }
 	
 	mov		r5, #topLeftXGame
@@ -80,17 +85,10 @@ paddle:
 	
 	pop { r4-r8, pc } 
 ///////////////////////////////////////////////
-.global checkTilePaddle
-checkTilePaddle:
-	push	{lr}
-	cmp		r0, #TILE_SIZE
-	movLE	r0, #-1
-	mov		r1, #TILE_SIZE
-	mov		r2, #19
-	mul		r1, r2
-	cmp		r0, r1
-	movGE	r0, #-1
-	pop		{pc}
+.global getTileSize
+getTileSize:
+	mov		r0, #TILE_SIZE
+	bx		lr
 ////////////////////////////////////////////////////////	
 @Deprecated
 drawBrick:

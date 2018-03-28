@@ -79,31 +79,93 @@ update:
 	
 	pop		{r4, pc}
 //////////////////////////////////////////////
-mvBall:
+mvBall:	
+	push	{r4-r7, lr}
+	ldr		r4, =gameState
+	ldrb	r5, [r4, #ballSpd]
 	
-	bx		lr
+ballTop:
+	ldrb	r0, [r4, #ballDir]
+	ldrb	r1, [r4, #ballAng]
+	bl		getBallOffsets
+	mov		r6, r0
+	mov		r7, r1
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	bl		unDrawBall
+	
+	ldr		r0, [r4, #ballX]
+	add		r0, r6
+	add		r0, #15
+	bl		checkTilePaddle
+	
+	add		r0, #1
+	
+	cmp		r0, #0
+	bleq	bounceHori
+	beq		ballTop
+	
+	ldr		r0, [r4, #ballY]
+	add		r0, r7
+	
+	bl		checkTileBall
+	cmp		r0, #-1
+	bleq	bounceVert
+	beq		ballTop
+	
+	//DO STUFFFFF
+	
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	add		r0, r6
+	add		r1, r7
+	str		r0, [r4, #ballX]
+	str		r1, [r4, #ballY]
+	bl		drawBall
+	
+	subs	r5, #1
+stuff:	bNE		ballTop
+	
+	
+	pop		{r4-r7, pc}
 /////////////////////////////////////////////
-bounceRev:
-	ldr		r0, = gameState
-	ldr		r1, [r0, #ballDir]
+getBallOffsets:@returns r0 - x offset, r1 - y offset
+@r0 - ball direction
+@r1 - ball angle
+						//if angle 60, y +- 2 and x +-1
+						//if angle 45, x,y +- 1
+	mov		r2, #1
 	
-	cmp		r1, #1
-	movLE	r2, #3
+	cmp		r1, #45
+	moveq	r3, #1
 	
-	cmp		r1, #2
-	movEQ	r2, #4
+	cmp		r1, #60
+	moveq	r3, #2
 	
-	cmp		r1, #3
-	movEQ	r2, #1
 	
-	cmp		r1, #4
-	movGE	r2, #2
 	
-	str		r2, [r0, #ballDir]
+	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
+	
+	cmp		r0, #2
+	moveq	r0, #-1
+	moveq	r1, #1
+	
+	cmp		r0, #3
+	moveq	r0, #1
+	moveq	r1, #-1
+	
+	cmp		r0, #4
+	moveq	r0, #-1
+	moveq	r1, r0
+	
+	mul		r0, r2
+	mul		r1, r3
 	
 	bx		lr
-//////////////////////////////////////////////////
-bounceVert:
+////////////////////////////////////////////
+bounceRev:
 	ldr		r0, = gameState
 	ldr		r1, [r0, #ballDir]
 	
@@ -119,13 +181,35 @@ bounceVert:
 	cmp		r1, #4
 	movGE	r2, #1
 	
-	str		r2, [r0, #ballDir]
+	strb		r2, [r0, #ballDir]
+	
+	bx		lr
+//////////////////////////////////////////////////
+bounceVert:
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	cmp		r1, #1
+	movLE	r2, #3
+	
+	cmp		r1, #2
+	movEQ	r2, #4
+	
+	cmp		r1, #3
+	movEQ	r2, #1
+	
+	cmp		r1, #4
+	movGE	r2, #2
+	
+	strb		r2, [r0, #ballDir]
 	
 	bx		lr
 //////////////////////////////////////////////////////
-bounceHori: @1 = up right, 2 = up left, 3 = down left, 4 = down right
+bounceHori: 
 	ldr		r0, = gameState
 	ldr		r1, [r0, #ballDir]
+	
+	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	
 	cmp		r1, #1
 	movLE	r2, #2
@@ -139,7 +223,7 @@ bounceHori: @1 = up right, 2 = up left, 3 = down left, 4 = down right
 	cmp		r1, #4
 	movGE	r2, #3
 	
-	str		r2, [r0, #ballDir]
+	strb		r2, [r0, #ballDir]
 	
 	bx		lr
 	
@@ -197,6 +281,41 @@ mvPadRet:
 	bl		drawPaddle
 	pop		{r4-r7, pc}
 ////////////////////////////////////////////////////
+checkTilePaddle:
+	push	{r4, lr}
+	mov		r4, r0
+	bl		getTileSize
+	
+	cmp		r4, r0
+	movLE	r0, #-1
+	
+	mov		r1, r0
+	mov		r2, #19
+	mul		r1, r2
+	
+	cmp		r4, r1
+	movGE	r0, #-1
+	
+	pop		{r4, pc}
+/////////////////////////////////////////////////
+checkTileBall:
+	push	{r4, lr}
+	mov		r4, r0
+	bl		getTileSize
+	
+	cmp		r4, r0
+	movLE	r0, #-1
+	
+	mov		r1, r0
+	mov		r2, #24
+	mul		r1, r2
+	
+	cmp		r4, r1
+	movGE	r0, #-1
+	
+	pop		{r4, pc}
+	
+/////////////////////////////////////////////
 .global cordToTile
 cordToTile:
 @ r0 -x
@@ -267,18 +386,18 @@ mapInitTop:
 gameState:
 //NEED TO INIT SOME OF THESE
 
-	.int	350				// paddleX(left most RELITIVE pixil)
+	.int	270				// paddleX(left most RELITIVE pixil)
 	.byte 	25, 50, 75, 100	// paddleoff
-	.int 	300				// ballX(top left RELITIVE pixil)
-	.int	600				// ballY(top left RELITIVE pixil)
-	.byte	1				// ballspeed
+	.int 	315				// ballX(top left RELITIVE pixil)
+	.int	675				// ballY(top left RELITIVE pixil)
+	.byte	2				// ballspeed
 	.byte	45				// ballangle
-	.byte	1				// balldirection
-							@  1 = up right, 2 = up left, 3 = down left, 4 = down right
+	.byte	3				// balldirection
+							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	.byte	1				// ballanchor, 1 if anchored, 0 if not
 	.int	0				// score
 	.int	1				// lives
-	.byte	0				// win, 1 if won, 0 if not
+	.byte	0				// event, 0 = normal, 1 = win, 2 = lose
 	.byte	0				// lose, 1 if lost, 0 if not
 	.byte	0				// numBricks
 	.rept	500				// game map 20*25 tiles
