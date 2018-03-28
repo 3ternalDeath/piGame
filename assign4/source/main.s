@@ -43,10 +43,10 @@ mainGameLoop:
 	bl		Read_SNES
 	ORRs	r0, #0
 	
-	b		update
+	bl		update
   
     
-    mov 	r0, #1000
+    mov 	r0, #4000
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -62,8 +62,8 @@ update:
 	mov		r0, #0
 	
 	tst		r4, #0x8		//A
-	moveq	r1, #1			//speed 1
-	movne	r2, #2			//speed 2
+	moveq	r1, #2			//speed 1
+	movne	r2, #3			//speed 2
 
 	tst		r4, #0x10		//RIGHT
 	movne	r0, #1
@@ -101,16 +101,28 @@ paddleTop:
 	cmp		r4, #0
 	blt		mvPadLft
 	ldr		r0, [r6, #padOff3]
-	add		r0, r7				//Right edge
-	add		r7, #1				//+1
-	// TODO: CHECK IF TILE OF R1 IS WALL
-	// IF NOT
-	str		r7, [r6, #padX]
+	add		r7, #1
+	add		r0, r7				//Right edge +1
+	
+	bl		checkTilePaddle
+	add		r1, r6, #gameMap
+	ldr		r1, [r1, r0]
+	cmp		r1, #255			//if tile wall
+	subeq	r7, #1
+	beq		mvPadRet
+	str		r7, [r6, #padX]		// if not
 	b		mvPaddleTest
-	// IF YES b mvPadRet, revert r7
+
 mvPadLft:
 	sub		r7, #1
-	// TODO: CHECK IF BLAH R0 IS WALL
+	mov		r0, r7
+	
+	bl		checkTilePaddle
+	add		r1, r6, #gameMap
+	ldr		r1, [r1, r0]
+	cmp		r1, #255			//if tile wall
+	addeq	r7, #1
+	beq		mvPadRet
 	str		r7, [r6, #padX]
 	
 mvPaddleTest:
@@ -120,9 +132,20 @@ mvPaddleTest:
 mvPadRet:
 	mov		r0, r7
 	bl		drawPaddle
-	pop		{r4-r7, lr}
+	pop		{r4-r7, pc}
 ////////////////////////////////////////////////////
-
+.global cordToTile
+cordToTile:
+@ r0 -x
+@ r1 -y
+	
+	lsr		r0, #5
+	lsr		r1, #5
+	mov		r3, #20
+	mul		r1, r3
+	add		r0, r1
+	bx		lr
+/////////////////////////////////////////
 firstMapDraw:
 	push { r4, r5, lr }
 	ldr		r4, =gameState

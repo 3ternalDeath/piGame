@@ -77,6 +77,13 @@ paddle:
 	bNE		paddle_top
 	
 	pop { r4-r8, pc } 
+///////////////////////////////////////////////
+.global checkTilePaddle
+checkTilePaddle:
+	push	{lr}
+	mov		r1, #paddleY
+	bl		cordToTile
+	pop		{pc}
 ////////////////////////////////////////////////////////	
 @Deprecated
 drawBrick:
@@ -142,7 +149,7 @@ Tile_FindTest:
 	
 	mov		r3, #32			// Set size of tile to 32 pixels
 	mul		r0, r3			// Find the pixel co-ords
-	mul		r1, r3		
+	mul		r1, r3			//CAN LSL 5 FOR EFFICIENCY
 	
 	add		r0, #topLeftXGame			// r1 is y-coord
 	add		r1, #topLeftYGame			// r0 is x-coord
