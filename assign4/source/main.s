@@ -20,10 +20,11 @@
 	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
 	.equ	gameMap, 	31
 
+////////////////////////////////////////////////////
 .global main
 main:
 	@ ask for frame buffer information
-	ldr 		r0, =frameBufferInfo 	@ frame buffer information structure
+	ldr 	r0, =frameBufferInfo 	@ frame buffer information structure
 	bl		initFbInfo
 	bl		snesSetup
 
@@ -32,12 +33,7 @@ main:
 	bl		initMap
 	
 	bl		firstMapDraw
-	mov		r0, #300
-	bl		drawPaddle
 	
-	mov		r0, #300
-	mov		r1, #600
-	bl		drawBall
 	
 mainGameLoop:
 	bl		Read_SNES
@@ -46,7 +42,7 @@ mainGameLoop:
 	bl		update
   
     
-    mov 	r0, #4000
+    mov 	r0, #8000
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -62,8 +58,8 @@ update:
 	mov		r0, #0
 	
 	tst		r4, #0x8		//A
-	moveq	r1, #2			//speed 1
-	movne	r2, #3			//speed 2
+	moveq	r1, #4			//speed 1
+	movne	r2, #5			//speed 2
 
 	tst		r4, #0x10		//RIGHT
 	movne	r0, #1
@@ -73,11 +69,165 @@ update:
 	
 							//left and right are mutually exclusive due to
 							//construction of snes
-	bl		mvPaddle					
+	//MUST MOVE PADDLE FIRST
+	bl		mvPaddle		
+	//OTHER MOVES
 	
+				
+	//MUST MOVE BALL LAST
+	bl		mvBall
 	
 	pop		{r4, pc}
+//////////////////////////////////////////////
+mvBall:	
+	push	{r4-r7, lr}
+	ldr		r4, =gameState
+	ldrb	r5, [r4, #ballSpd]
+	
+ballTop:
+	ldrb	r0, [r4, #ballDir]
+	ldrb	r1, [r4, #ballAng]
+	bl		getBallOffsets
+	mov		r6, r0
+	mov		r7, r1
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	bl		unDrawBall
+	
+	ldr		r0, [r4, #ballX]
+	add		r0, r6
+	add		r0, #15
+	bl		checkTilePaddle
+	
+	add		r0, #1
+	
+	cmp		r0, #0
+	bleq	bounceHori
+	beq		ballTop
+	
+	ldr		r0, [r4, #ballY]
+	add		r0, r7
+	
+	bl		checkTileBall
+	cmp		r0, #-1
+	bleq	bounceVert
+	beq		ballTop
+	
+	//DO STUFFFFF
+	
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	add		r0, r6
+	add		r1, r7
+	str		r0, [r4, #ballX]
+	str		r1, [r4, #ballY]
+	bl		drawBall
+	
+	subs	r5, #1
+stuff:	bNE		ballTop
+	
+	
+	pop		{r4-r7, pc}
+/////////////////////////////////////////////
+getBallOffsets:@returns r0 - x offset, r1 - y offset
+@r0 - ball direction
+@r1 - ball angle
+						//if angle 60, y +- 2 and x +-1
+						//if angle 45, x,y +- 1
+	mov		r2, #1
+	
+	cmp		r1, #45
+	moveq	r3, #1
+	
+	cmp		r1, #60
+	moveq	r3, #2
+	
+	
+	
+	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
+	
+	cmp		r0, #2
+	moveq	r0, #-1
+	moveq	r1, #1
+	
+	cmp		r0, #3
+	moveq	r0, #1
+	moveq	r1, #-1
+	
+	cmp		r0, #4
+	moveq	r0, #-1
+	moveq	r1, r0
+	
+	mul		r0, r2
+	mul		r1, r3
+	
+	bx		lr
+////////////////////////////////////////////
+bounceRev:
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	cmp		r1, #1
+	movLE	r2, #4
+	
+	cmp		r1, #2
+	movEQ	r2, #3
+	
+	cmp		r1, #3
+	movEQ	r2, #2
+	
+	cmp		r1, #4
+	movGE	r2, #1
+	
+	strb		r2, [r0, #ballDir]
+	
+	bx		lr
+//////////////////////////////////////////////////
+bounceVert:
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	cmp		r1, #1
+	movLE	r2, #3
+	
+	cmp		r1, #2
+	movEQ	r2, #4
+	
+	cmp		r1, #3
+	movEQ	r2, #1
+	
+	cmp		r1, #4
+	movGE	r2, #2
+	
+	strb		r2, [r0, #ballDir]
+	
+	bx		lr
 //////////////////////////////////////////////////////
+bounceHori: 
+	ldr		r0, = gameState
+	ldr		r1, [r0, #ballDir]
+	
+	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
+	
+	cmp		r1, #1
+	movLE	r2, #2
+	
+	cmp		r1, #2
+	movEQ	r2, #1
+	
+	cmp		r1, #3
+	movEQ	r2, #4
+	
+	cmp		r1, #4
+	movGE	r2, #3
+	
+	strb		r2, [r0, #ballDir]
+	
+	bx		lr
+	
+/////////////////////////////////////////////////
 mvPaddle:
 	@ r0 - direction: -1, 0, 1
 	@ r1 - speed/amt of loop
@@ -100,14 +250,13 @@ paddleTop:
 	
 	cmp		r4, #0
 	blt		mvPadLft
-	ldr		r0, [r6, #padOff3]
+mvPadRgt:
+	ldrb	r0, [r6, #padOff3]
 	add		r7, #1
 	add		r0, r7				//Right edge +1
 	
 	bl		checkTilePaddle
-	add		r1, r6, #gameMap
-	ldr		r1, [r1, r0]
-	cmp		r1, #255			//if tile wall
+	cmp		r0, #-1			//if tile wall
 	subeq	r7, #1
 	beq		mvPadRet
 	str		r7, [r6, #padX]		// if not
@@ -118,9 +267,7 @@ mvPadLft:
 	mov		r0, r7
 	
 	bl		checkTilePaddle
-	add		r1, r6, #gameMap
-	ldr		r1, [r1, r0]
-	cmp		r1, #255			//if tile wall
+	cmp		r0, #-1			//if tile wall
 	addeq	r7, #1
 	beq		mvPadRet
 	str		r7, [r6, #padX]
@@ -134,6 +281,41 @@ mvPadRet:
 	bl		drawPaddle
 	pop		{r4-r7, pc}
 ////////////////////////////////////////////////////
+checkTilePaddle:
+	push	{r4, lr}
+	mov		r4, r0
+	bl		getTileSize
+	
+	cmp		r4, r0
+	movLE	r0, #-1
+	
+	mov		r1, r0
+	mov		r2, #19
+	mul		r1, r2
+	
+	cmp		r4, r1
+	movGE	r0, #-1
+	
+	pop		{r4, pc}
+/////////////////////////////////////////////////
+checkTileBall:
+	push	{r4, lr}
+	mov		r4, r0
+	bl		getTileSize
+	
+	cmp		r4, r0
+	movLE	r0, #-1
+	
+	mov		r1, r0
+	mov		r2, #24
+	mul		r1, r2
+	
+	cmp		r4, r1
+	movGE	r0, #-1
+	
+	pop		{r4, pc}
+	
+/////////////////////////////////////////////
 .global cordToTile
 cordToTile:
 @ r0 -x
@@ -166,6 +348,15 @@ first_test:
 	mov		r0, r4
 	mov		r1, r5
 	bl		drawTile	// Draw final tile
+	
+	sub		r4, #gameMap
+	ldr		r0, [r4, #padX]
+	bl		drawPaddle
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	bl		drawBall
+	
 	pop	{ r4, r5, lr }
 	
 ///////////////////////////////////////////////////////
@@ -195,18 +386,18 @@ mapInitTop:
 gameState:
 //NEED TO INIT SOME OF THESE
 
-	.int	300 			// paddleX(left most RELITIVE pixil)
-	.byte 	0, 0, 0, 0 		// paddleoff
-	.int 	0				// ballX(top left RELITIVE pixil)
-	.int	0				// ballY(top left RELITIVE pixil)
-	.byte	1				// ballspeed
+	.int	270				// paddleX(left most RELITIVE pixil)
+	.byte 	25, 50, 75, 100	// paddleoff
+	.int 	315				// ballX(top left RELITIVE pixil)
+	.int	675				// ballY(top left RELITIVE pixil)
+	.byte	2				// ballspeed
 	.byte	45				// ballangle
-	.byte	1				// balldirection
-							@  1 = up right, 2 = up left, 3 = down left, 4 = down right
+	.byte	3				// balldirection
+							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	.byte	1				// ballanchor, 1 if anchored, 0 if not
 	.int	0				// score
 	.int	1				// lives
-	.byte	0				// win, 1 if won, 0 if not
+	.byte	0				// event, 0 = normal, 1 = win, 2 = lose
 	.byte	0				// lose, 1 if lost, 0 if not
 	.byte	0				// numBricks
 	.rept	500				// game map 20*25 tiles
