@@ -3,7 +3,7 @@
 .section .text
 
 
-.equ	TOP_LEFT_X,	100
+.equ	TOP_LEFT_X,	50
 .equ	TOP_LEFT_Y, 100
 
 @ Draw the specified character to the location with size
@@ -89,6 +89,140 @@ test:
 
 ////////////////////////////////////////////////////
 
+.global DrawMenu
+DrawMenu:
+
+	push { r4-r10, lr }
+	
+	mov r4, #TOP_LEFT_X
+	mov	r5, #TOP_LEFT_Y
+	
+	mov	r0, #640		// Width of img
+	add	r6, r4, r0		
+	mov	r0, #800		// Height of img
+	add	r7, r5, r0		
+	mov r8, #0
+	
+	mov r9, r4
+	mov r10, r5
+MenuLine$:
+	ldr r0, =menuImg
+	ldr	r2, [r0, r8, lsl #2]
+	mov	r0, r9
+	mov r1, r10
+	bl DrawPixel
+	
+	add	r9, #1
+	add	r8, #1
+MenuLineTest$:
+	cmp	r9, r6
+	bLT MenuLine$
+
+	add r10, #1
+	cmp r10, r7
+	movLE r9, r4
+	bLT  MenuLine$
+	
+	pop	{ r4-r10, pc }
+
+/////////////////////
+.global EraseArrow
+EraseArrow:
+@ r0 - 0 Erases at quit, 1 erases at Start
+	push { r4-r10, lr }
+	
+	mov r4, #TOP_LEFT_X
+	add r4, #100
+	mov	r5, #TOP_LEFT_Y
+	
+	cmp r0, #1
+	bEQ	ErpointQuit
+	
+	mov r0, #370
+	add	r5, r0
+	b 	ErpointNext
+ErpointQuit:
+	mov r0, #515
+	add	r5, r0
+ErpointNext:
+	
+	mov	r0, #70		// Width of img
+	add	r6, r4, r0		
+	mov	r0, #45		// Height of img
+	add	r7, r5, r0		
+	mov r8, #0
+	
+	mov r9, r4
+	mov r10, r5
+ErArrowLine$:
+	ldr	r2, =0x3AE067
+	mov	r0, r9
+	mov r1, r10
+	bl DrawPixel
+	
+	add	r9, #1
+	add	r8, #1
+ErArrowLineTest$:
+
+	cmp	r9, r6
+	bLT ErArrowLine$
+
+	add r10, #1
+	cmp r10, r7
+	movLE r9, r4
+	bLT  ErArrowLine$
+	pop	{ r4-r10, pc }
+
+
+////////////////////////////////////////////
+.global DrawArrow
+DrawArrow:
+@ r0 - 0 points to Start, 1 points to quit
+	push { r4-r10, lr }
+	
+	mov r4, #TOP_LEFT_X
+	add r4, #100
+	mov	r5, #TOP_LEFT_Y
+	
+	cmp r0, #1
+	bNE	pointQuit
+	mov r0, #370
+	add	r5, r0
+	b 	pointNext
+pointQuit:
+	mov r0, #515
+	add	r5, r0
+pointNext:
+	
+	mov	r0, #70		// Width of img
+	add	r6, r4, r0		
+	mov	r0, #45		// Height of img
+	add	r7, r5, r0		
+	mov r8, #0
+	
+	mov r9, r4
+	mov r10, r5
+ArrowLine$:
+	ldr r0, =arrowImg
+	ldr	r2, [r0, r8, lsl #2]
+	mov	r0, r9
+	mov r1, r10
+	bl DrawPixel
+	
+	add	r9, #1
+	add	r8, #1
+ArrowLineTest$:
+
+	cmp	r9, r6
+	bLT ArrowLine$
+
+	add r10, #1
+	cmp r10, r7
+	movLE r9, r4
+	bLT  ArrowLine$
+	pop	{ r4-r10, pc }
+
+/////////////////////
 @ Data section
 .section .data
 
