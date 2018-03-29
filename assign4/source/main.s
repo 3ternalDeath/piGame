@@ -33,7 +33,7 @@ main:
 	bl		GameMenu
 	bl		initMap
 	
-	bl		firstMapDraw
+	bl		fullMapDraw
 	
 	
 mainGameLoop:
@@ -98,26 +98,26 @@ ballTop:
 	
 	ldr		r0, [r4, #ballX]
 	add		r0, r6
-	add		r0, #15
-	bl		checkTilePaddle
-	
-	add		r0, #1
-	
+	ldr		r1, [r4, #ballY]
+	add		r1, r7
+	bl		checkTileBall
 	cmp		r0, #0
+	beq		ballMVGood
+	
+	cmpne	r0, #255
 	bleq	bounceHori
 	beq		ballTop
 	
-	ldr		r0, [r4, #ballY]
-	add		r0, r7
-	
-	bl		checkTileBall
-	cmp		r0, #-1
+	cmpne	r0, #254
 	bleq	bounceVert
 	beq		ballTop
 	
+	blne	bounceVert
+	bne		ballTop
+	
 	//DO STUFFFFF
 	
-	
+ballMVGood:	
 	ldr		r0, [r4, #ballX]
 	ldr		r1, [r4, #ballY]
 	add		r0, r6
@@ -131,6 +131,97 @@ stuff:	bNE		ballTop
 	
 	
 	pop		{r4-r7, pc}
+/////////////////////////////////////////////////
+checkTileBall:
+@ r0 - x
+@ r1 - y
+	push	{r4-r7, lr}
+	mov		r4, r0
+	mov		r5, r1
+	mov		r6, #0
+	ldr		r7, =gameState
+	add		r7, #gameMap
+	
+	bl		cordToTile
+	ldrb	r0, [r7, r0]
+	cmp		r0, #0
+	beq		checkTBNxt1
+	mov		r6, r0
+	
+checkTBNxt1:
+	bl		getBallSize
+	add		r0, r4		//x + ball size
+	mov		r1, r5
+	bl		cordToTile
+	ldrb	r0, [r7, r0]
+	cmp		r0, #0
+	beq		checkTBNxt2
+	
+	mov		r1, r6
+	bl		checkTBPriority
+	mov		r6, r0
+	
+	
+	
+checkTBNxt2:
+	bl		getBallSize
+	add		r0, r5		//y + ball size
+	mov		r1, r0
+	mov		r0, r4
+	bl		cordToTile
+	ldrb	r0, [r7, r0]
+	cmp		r0, #0
+	beq		checkTBNxt3
+	
+	mov		r1, r6
+	bl		checkTBPriority
+	mov		r6, r0
+	
+checkTBNxt3:
+	bl		getBallSize
+	mov		r1, r0
+	add		r0, r4		//x + ball size
+	add		r1, r5		//y + ball size
+	bl		cordToTile
+	ldrb	r0, [r7, r0]
+	cmp		r0, #0
+	beq		checkTBEnd
+	
+	mov		r1, r6
+	bl		checkTBPriority
+	mov		r6, r0
+	
+	
+	
+checkTBEnd:
+	mov		r0, r6
+	pop		{r4-r7, pc}
+	
+/////////////////////////////////////////////
+checkTBPriority: @returns tile type with higher priority
+@ r0 - new tile type
+@ r1 - current tile type
+	cmp		r0, r1		//if they are equal, return new(doesnt matter)
+	bxeq	lr
+	
+	cmp		r1, #0		//if current tile is 0(new not 0), return new
+	bxeq	lr
+	
+	cmp		r0, #0		//if new tile 0(current not 0), return current
+	moveq	r0, r1
+	bxeq	lr
+	
+	cmp		r1, #255	//if current tile is 255(new tile not 0 or 255), return new
+	bxeq	lr
+	
+	cmp		r1, #254	//if current tile 254(current not 0, 255)
+	cmpeq	r0, #255	//and new tile 255, return current
+	moveq	r0, r1
+	bxeq	lr
+	
+	bx		lr
+				//default return new
+	
 /////////////////////////////////////////////
 getBallOffsets:@returns r0 - x offset, r1 - y offset
 @r0 - ball direction
@@ -298,24 +389,7 @@ checkTilePaddle:
 	movGE	r0, #-1
 	
 	pop		{r4, pc}
-/////////////////////////////////////////////////
-checkTileBall:
-	push	{r4, lr}
-	mov		r4, r0
-	bl		getTileSize
-	
-	cmp		r4, r0
-	movLE	r0, #-1
-	
-	mov		r1, r0
-	mov		r2, #24
-	mul		r1, r2
-	
-	cmp		r4, r1
-	movGE	r0, #-1
-	
-	pop		{r4, pc}
-	
+
 /////////////////////////////////////////////
 .global cordToTile
 cordToTile:
@@ -329,7 +403,7 @@ cordToTile:
 	add		r0, r1
 	bx		lr
 /////////////////////////////////////////
-firstMapDraw:
+fullMapDraw:
 	push { r4, r5, lr }
 	ldr		r4, =gameState
 	add		r4, #gameMap
@@ -383,7 +457,7 @@ mapInitTop:
 GameMenu:
 		push { r4, lr }
 		bl		DrawMenu
-		mov		r4, #1
+		mov		r4, #0
 		bl		DrawArrow
 MenuChkLoop:
 		bl Read_SNES
@@ -425,7 +499,7 @@ gameState:
 	.int	675				// ballY(top left RELITIVE pixil)
 	.byte	2				// ballspeed
 	.byte	45				// ballangle
-	.byte	3				// balldirection
+	.byte	4				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	.byte	1				// ballanchor, 1 if anchored, 0 if not
 	.int	0				// score

@@ -89,6 +89,11 @@ actualDrawPaddle:
 getTileSize:
 	mov		r0, #TILE_SIZE
 	bx		lr
+///////////////////////////////////////////////////
+.global getBallSize
+getBallSize:
+	mov		r0, #BALL_SIZE
+	bx		lr
 ////////////////////////////////////////////////////////	
 @Deprecated
 drawBrick:
