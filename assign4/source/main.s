@@ -30,6 +30,7 @@ main:
 
 //MAIN MENUE STUFF HERE
 
+	bl		GameMenu
 	bl		initMap
 	
 	bl		firstMapDraw
@@ -379,7 +380,39 @@ mapInitTop:
 		bx		lr
 ////////////////////////////////////////////////	
 
-
+GameMenu:
+		push { r4, lr }
+		bl		DrawMenu
+		mov		r4, #1
+		bl		DrawArrow
+MenuChkLoop:
+		bl Read_SNES
+		cmp		r0, #0
+		beq		MenuChkLoop		// loop until input is given
+GameMenuLoop:
+
+		tst		r0, #0x8		// But-A
+		bEQ		MenuNext
+		
+		cmpNE	r4, #1
+		bEQ		MenuEnd
+MenuNext:	
+		tst 	r0,	#0x80 		// Pad-Up
+		movNE 	r4, #1
+		
+		tst r0, 	#0x40		// Pad-Down
+		movNE		r4, #0
+		
+		mov 	r0, r4
+		bl		DrawArrow
+		mov		r0, r4
+		bl		EraseArrow
+		b 		MenuChkLoop
+
+MenuEnd:	
+		pop { r4, pc }
+
+////////////////////
 @ Data section
 .section .data
 .global gameState
