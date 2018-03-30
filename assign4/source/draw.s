@@ -296,6 +296,16 @@ Tile_next6:
 Tile_end:
 	
 	pop { r4, r5, pc }
+///////////////////////////////////////////////////////////////
+.global drawRelSquare
+drawRelSquare:
+@ r0 - top left x co-ordinate
+@ r1 - top left y co-ordinate
+@ r2 - colour
+@ r3 - Size
+	add		r0, #topLeftXGame
+	add		r1, #topLeftYGame
+	b		drawSquare
 
 //////////////////////////////////////////////////////////////////////	
 	

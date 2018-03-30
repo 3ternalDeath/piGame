@@ -103,7 +103,7 @@ uh:	mov		r4, r0
 	
 	cmp		r1, r0
 	bGE		mvValPkStop
-	sub		r1, #5
+	sub		r1, #7
 	ldr		r0, [r4, #valPkX]
 	
 	bl 		cordToTile
@@ -116,8 +116,9 @@ uh:	mov		r4, r0
 	ldr		r0, [r4, #valPkX]
 	ldr		r1, [r4, #valPkY]
 	add		r1, #6
+	str		r1, [r4, #valPkY]
 	ldr		r2, =#0xFF32CD32
-	bl		drawSquare
+	bl		drawRelSquare
 	
 	
 mvValPkStop:
