@@ -88,43 +88,6 @@ test:
 	pop		{r4-r8, fp, pc}
 
 ////////////////////////////////////////////////////
-.global DrawPause
-DrawPause:
-@	r0 - Address of screen to print
-	push { r4-r10, lr }
-	
-	mov r4, #TOP_LEFT_X + 45
-	mov	r5, #TOP_LEFT_Y + 240
-	
-	mov	r0, #550		// Width of img
-	add	r6, r4, r0		
-	mov	r0, #450		// Height of img
-	add	r7, r5, r0		
-	mov r8, #0
-	
-	mov r9, r4
-	mov r10, r5
-PauseLine$:
-	ldr		r0, =PauseMenuImg
-	ldr	r2, [r0, r8, lsl #2]
-	mov	r0, r9
-	mov r1, r10
-	bl DrawPixel
-	
-	add	r9, #1
-	add	r8, #1
-PauseLineTest$:
-	cmp	r9, r6
-	bLT PauseLine$
-
-	add r10, #1
-	cmp r10, r7
-	movLE r9, r4
-	bLT  PauseLine$
-	
-	pop	{ r4-r10, pc }
-	
-/////////////////////
 
 .global DrawScreen
 DrawScreen:
@@ -162,6 +125,44 @@ ScreenLineTest$:
 	
 	pop	{ r4-r11, pc }
 
+////////////////////////////////////////////////////
+
+.global DrawPause
+DrawPause:
+@	r0 - Address of screen to print
+	push { r4-r10, lr }
+	
+	mov r4, #TOP_LEFT_X + 45
+	mov	r5, #TOP_LEFT_Y + 240
+	
+	mov	r0, #550		// Width of img
+	add	r6, r4, r0		
+	mov	r0, #450		// Height of img
+	add	r7, r5, r0		
+	mov r8, #0
+	
+	mov r9, r4
+	mov r10, r5
+PauseLine$:
+	ldr		r0, =PauseMenuImg
+	ldr	r2, [r0, r8, lsl #2]
+	mov	r0, r9
+	mov r1, r10
+	bl DrawPixel
+	
+	add	r9, #1
+	add	r8, #1
+PauseLineTest$:
+	cmp	r9, r6
+	bLT PauseLine$
+
+	add r10, #1
+	cmp r10, r7
+	movLE r9, r4
+	bLT  PauseLine$
+	
+	pop	{ r4-r10, pc }
+	
 /////////////////////
 .global EraseArrow
 EraseArrow:

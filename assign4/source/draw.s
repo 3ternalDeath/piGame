@@ -16,16 +16,68 @@
 	.equ	padY, (25*TILE_SIZE) - 100
 @ Contains the draw functions
 
+
+	.equ	padX, 		0
+	.equ	padOff0, 	4
+	.equ	padOff1, 	5
+	.equ	padOff2, 	6
+	.equ	padOff3, 	7
+	.equ	ballX, 		8
+	.equ	ballY, 		12
+	.equ	ballSpd, 	16
+	.equ	ballAng, 	17
+	.equ	ballDir, 	18
+	.equ	ballAnc, 	19
+	.equ	score, 		20
+	.equ	lives, 		24
+	.equ	event, 		28
+	.equ	lose, 		29
+	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
+	.equ	gameMap, 	31
+	
 .text
 
-//////////////////////////////////////////////////
+//////////////////////////
+.global fullMapDraw
+fullMapDraw:
+	push { r4, r5, lr }
+	ldr		r4, =gameState
+	add		r4, #gameMap
+	
+	mov		r5, #499		// last tile element
+	
+	//	Draw each tile
+first_top:
+	mov 	r0, r4
+	mov		r1, r5
+	bl 		drawTile
+	
+first_test:	
+	subs	r5, #1		// Decrement counter and set flags
+	bNE		first_top
+	
+	mov		r0, r4
+	mov		r1, r5
+	bl		drawTile	// Draw final tile
+	
+	sub		r4, #gameMap
+	ldr		r0, [r4, #padX]
+	bl		drawPaddle
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	bl		drawBall
+	
+	pop	{ r4, r5, pc }
+	
+///////////////////////////////////////////////////////
+
 .global unDrawBall
 unDrawBall:
 	ldr		r2, =0xFF000000
 	b		actualDrawBall
 .global drawBall
 drawBall:
-	// I cant think of a good way to draw it as a ball right now
 	@ r0 - x pos relative to game
 	@ r1 - y pos relative to game
 	

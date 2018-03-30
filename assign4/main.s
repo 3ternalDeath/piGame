@@ -31,14 +31,16 @@ main:
 //MAIN MENUE STUFF HERE
 
 	bl		GameMenu
+
 	bl		initMap
 	
 	bl		fullMapDraw
-	
+
 mainGameLoop:
+
 	bl		Read_SNES
 	tst		r0, #0x100		// If start is pressed go to pause menu
-	blNE 	PauseMenu
+	blNE PauseMenu
 	
 	bl		update
   
@@ -51,9 +53,6 @@ mainGameLoop:
 	haltLoop$:
 		b	haltLoop$
 		
-		
-
-	
 ///////////////////////////////////////////////////////
 update:
 	push	{r4, lr}
@@ -138,18 +137,14 @@ mvBlBnc3:
 	b		ballTop
 	
 ballMVMbyGood:
-	bl		getBallSize
-	mov		r8, r0
+	bl		getPadY
 	ldr		r1, [r4, #ballY]
 	add		r1, r7
-	add		r8, r1
-	bl		getPadY
-	cmp		r8, r0
+	cmp		r1, r0
 	bLT		ballMVGood
-	add		r0, #2
-	cmp		r8, r0
+so:	add		r0, #2
+	cmp		r1, r0
 	bGT		ballMVGood
-
 	bl		bouncePaddle
 	
 	
@@ -170,45 +165,39 @@ ballMVGood:
 	pop		{r4-r8, pc}
 /////////////////////////////////////////////////
 bouncePaddle:
-	push	{r4}
 	ldr		r0, =gameState
 	ldr		r1, [r0, #ballX]
 	ldr		r2, [r0, #padX]
 	ldrb	r3, [r0, #padOff3]
-	add		r3, r2
 	
 	cmp		r1, r2
 	bLT		bPadMiss
 	cmp		r1, r3
 	bGT		bPadMiss
 	
-	ldrb	r3, [r0, #padOff1]
-	add		r3, r2
-	cmp		r1, r3
+	ldrb	r2, [r0, #padOff1]
+	cmp		r1, r2
 	bLE		bPadL
 bPadR:
 	mov		r3, #3
 	strb	r3, [r0, #ballDir]
-	ldrb	r4, [r0, #padOff2]
-	add		r4, r2
-	cmp		r1, r4
+	ldrb	r2, [r0, #padOff2]
+	cmp		r1, r2
 	movGT	r3, #45
 	movLE	r3, #60
 	b		bPadGud
 bPadL:
 	mov		r3, #4
 	strb	r3, [r0, #ballDir]
-	ldrb	r4, [r0, #padOff1]
-	add		r4, r2
-	cmp		r1, r4
-	movGT	r3, #45
-	movLE	r3, #60
+	ldrb	r2, [r0, #padOff2]
+	cmp		r1, r2
+	movLT	r3, #45
+	movGE	r3, #60
 
 bPadGud:
 	strb	r3, [r0, #ballDir]
 
 bPadMiss:
-	pop		{r4}
 	bx		lr
 ///////////////////////////////////////////
 decrementBrick:
@@ -449,7 +438,38 @@ cordToTile:
 	add		r0, r1
 	bx		lr
 /////////////////////////////////////////
-
+fullMapDraw:
+	push { r4, r5, lr }
+	ldr		r4, =gameState
+	add		r4, #gameMap
+	
+	mov		r5, #499		// last tile element
+	
+	//	Draw each tile
+first_top:
+	mov 	r0, r4
+	mov		r1, r5
+	bl 		drawTile
+	
+first_test:	
+	subs	r5, #1		// Decrement counter and set flags
+	bNE		first_top
+	
+	mov		r0, r4
+	mov		r1, r5
+	bl		drawTile	// Draw final tile
+	
+	sub		r4, #gameMap
+	ldr		r0, [r4, #padX]
+	bl		drawPaddle
+	
+	ldr		r0, [r4, #ballX]
+	ldr		r1, [r4, #ballY]
+	bl		drawBall
+	
+	pop	{ r4, r5, lr }
+	
+///////////////////////////////////////////////////////
 initMap:
 		ldr		r0, =map1
 		ldr		r1, =gameState
@@ -502,8 +522,46 @@ MenuNext:
 MenuEnd:	
 		pop { r4, pc }
 
+////////////////////
 
-	
+PauseMenu:
+	push { r4, lr }
+	mov		r4, #1
+	bl		DrawPause
+test:
+	mov		r0, #60000		// Give it a pause for buttons to reset
+	bl 		delayMicroseconds
+	mov		r0, #60000		
+	bl 		delayMicroseconds
+PauseTop:
+
+		bl 		Read_SNES
+		tst		r0, #0x100
+		bNE		PauseEnd		// If start is pressed, exit menu
+
+PauseNext:	
+		tst		r0, #0x80		// Pad-Up is pressed
+		movNE	r4, #1
+
+
+		tst		r0, #0x40		// Pad-Down is pressed
+		movNE	r4, #0
+
+
+		mov		r0, r4
+		bl		DrawArrow
+		mov		r0, r4
+		bl		EraseArrow
+		
+		b 		PauseTop
+PauseEnd:
+		bl		fullMapDraw
+		mov		r0, #60000		// Give it a pause for buttons to reset
+	bl 		delayMicroseconds
+		mov		r0, #30000
+		bl		delayMicroseconds
+	pop { r4, pc }
+
 @ Data section
 .section .data
 .global gameState
