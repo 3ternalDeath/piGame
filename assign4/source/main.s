@@ -43,7 +43,7 @@ mainGameLoop:
 	bl		update
   
     
-    mov 	r0, #8000
+    mov 	r0, #20000
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -151,6 +151,8 @@ ballMVMbyGood:
 	bGT		ballMVGood
 
 	bl		bouncePaddle
+	cmp		r0, #-1
+	bNE		ballTop
 	
 	
 ballMVGood:	
@@ -170,26 +172,43 @@ ballMVGood:
 	pop		{r4-r8, pc}
 /////////////////////////////////////////////////
 bouncePaddle:
-	push	{r4}
-	ldr		r0, =gameState
-	ldr		r1, [r0, #ballX]
-	ldr		r2, [r0, #padX]
-	ldrb	r3, [r0, #padOff3]
+	push	{r4-r5, lr}
+	ldr		r5, =gameState
+	ldr		r1, [r5, #ballX]
+	ldr		r2, [r5, #padX]
+	ldrb	r3, [r5, #padOff3]
 	add		r3, r2
 	
 	cmp		r1, r2
+	bLT		bPadMbyMiss
+	cmp		r1, r3
+	bGT		bPadMbyMiss
+	
+	b		bPadHap
+	
+bPadMbyMiss:
+	bl		getBallSize
+	add		r1, r0
+	cmp		r1, r2
+	movLT	r0, #-1
 	bLT		bPadMiss
 	cmp		r1, r3
+	movGT	r0, #-1
 	bGT		bPadMiss
 	
-	ldrb	r3, [r0, #padOff1]
+bPadHap:
+	bl		getBallSize
+	lsl		r0, #1
+	add		r1, r0
+	ldr		r2, [r5, #padX]
+	ldrb	r3, [r5, #padOff1]
 	add		r3, r2
 	cmp		r1, r3
 	bLE		bPadL
 bPadR:
 	mov		r3, #3
-	strb	r3, [r0, #ballDir]
-	ldrb	r4, [r0, #padOff2]
+	strb	r3, [r5, #ballDir]
+	ldrb	r4, [r5, #padOff2]
 	add		r4, r2
 	cmp		r1, r4
 	movGT	r3, #45
@@ -197,19 +216,18 @@ bPadR:
 	b		bPadGud
 bPadL:
 	mov		r3, #4
-	strb	r3, [r0, #ballDir]
-	ldrb	r4, [r0, #padOff1]
+	strb	r3, [r5, #ballDir]
+	ldrb	r4, [r5, #padOff0]
 	add		r4, r2
 	cmp		r1, r4
-	movGT	r3, #45
-	movLE	r3, #60
+	movLT	r3, #45
+	movGE	r3, #60
 
 bPadGud:
-	strb	r3, [r0, #ballDir]
+	strb	r3, [r5, #ballAng]
 
 bPadMiss:
-	pop		{r4}
-	bx		lr
+	pop		{r4-r5, pc}
 ///////////////////////////////////////////
 decrementBrick:
 @r0 - tile number
@@ -271,14 +289,14 @@ getBallOffsets:@returns r0 - x offset, r1 - y offset
 @r0 - ball direction
 @r1 - ball angle
 						//if angle 60, y +- 2 and x +-1
-						//if angle 45, x,y +- 1
-	mov		r2, #1
+						//if angle 45, x,y +- 2
+	mov		r3, #2
 	
 	cmp		r1, #45
-	moveq	r3, #1
+	moveq	r2, #2
 	
 	cmp		r1, #60
-	moveq	r3, #2
+	moveq	r2, #1
 	
 	
 	
@@ -511,7 +529,7 @@ gameState:
 //NEED TO INIT SOME OF THESE
 
 	.int	270				// paddleX(left most RELITIVE pixil)
-	.byte 	25, 50, 75, 100	// paddleoff
+	.byte 	30, 50, 70, 100	// paddleoff
 	.int 	315				// ballX(top left RELITIVE pixil)
 	.int	675				// ballY(top left RELITIVE pixil)
 	.byte	1				// ballspeed
