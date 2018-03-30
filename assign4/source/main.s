@@ -135,14 +135,18 @@ mvBlBnc3:
 	b		ballTop
 	
 ballMVMbyGood:
-	bl		getPadY
+	bl		getBallSize
+	mov		r8, r0
 	ldr		r1, [r4, #ballY]
 	add		r1, r7
-	cmp		r1, r0
+	add		r8, r1
+	bl		getPadY
+	cmp		r8, r0
 	bLT		ballMVGood
-so:	add		r0, #2
-	cmp		r1, r0
+	add		r0, #2
+	cmp		r8, r0
 	bGT		ballMVGood
+
 	bl		bouncePaddle
 	
 	
@@ -163,39 +167,45 @@ ballMVGood:
 	pop		{r4-r8, pc}
 /////////////////////////////////////////////////
 bouncePaddle:
+	push	{r4}
 	ldr		r0, =gameState
 	ldr		r1, [r0, #ballX]
 	ldr		r2, [r0, #padX]
 	ldrb	r3, [r0, #padOff3]
+	add		r3, r2
 	
 	cmp		r1, r2
 	bLT		bPadMiss
 	cmp		r1, r3
 	bGT		bPadMiss
 	
-	ldrb	r2, [r0, #padOff1]
-	cmp		r1, r2
+	ldrb	r3, [r0, #padOff1]
+	add		r3, r2
+	cmp		r1, r3
 	bLE		bPadL
 bPadR:
 	mov		r3, #3
 	strb	r3, [r0, #ballDir]
-	ldrb	r2, [r0, #padOff2]
-	cmp		r1, r2
+	ldrb	r4, [r0, #padOff2]
+	add		r4, r2
+	cmp		r1, r4
 	movGT	r3, #45
 	movLE	r3, #60
 	b		bPadGud
 bPadL:
 	mov		r3, #4
 	strb	r3, [r0, #ballDir]
-	ldrb	r2, [r0, #padOff2]
-	cmp		r1, r2
-	movLT	r3, #45
-	movGE	r3, #60
+	ldrb	r4, [r0, #padOff1]
+	add		r4, r2
+	cmp		r1, r4
+	movGT	r3, #45
+	movLE	r3, #60
 
 bPadGud:
 	strb	r3, [r0, #ballDir]
 
 bPadMiss:
+	pop		{r4}
 	bx		lr
 ///////////////////////////////////////////
 decrementBrick:
