@@ -78,6 +78,8 @@ map1:
 	.endr
 	
 	//1 line of death
-	.rept	20
+	.byte	255
+	.rept	18
 		.byte	253
 	.endr
+	.byte 255

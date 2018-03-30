@@ -81,7 +81,7 @@ update:
 	pop		{r4, pc}
 //////////////////////////////////////////////
 mvBall:	
-	push	{r4-r7, lr}
+	push	{r4-r8, lr}
 	ldr		r4, =gameState
 	ldrb	r5, [r4, #ballSpd]
 	
@@ -99,27 +99,40 @@ ballTop:
 	ldr		r0, [r4, #ballX]
 	add		r0, r6
 	ldr		r1, [r4, #ballY]
+	ldrb	r2, [r4, #ballDir]
 	add		r1, r7
 	bl		checkTileBall
 	cmp		r0, #0
 	beq		ballMVGood
 	
-	cmp		r0, #255
+	cmp		r0, #255		//side wall
 	bNE		mvBlBnc1
 	bl		bounceHori
 	b		ballTop
 
 mvBlBnc1:	
-	cmp		r0, #254
+	cmp		r0, #254		//roof
 	bNE		mvBlBnc2
 	bl		bounceVert
 	b		ballTop
 
 mvBlBnc2:	
+	cmp		r0, #253		//lava
+	bNE		mvBlBnc3
+	b		ballTop
+	//DO STUFFFFF
+	
+mvBlBnc3:
+	mov		r8, r1
+	mov		r0, r1
+	//bl		decrementBrick
+	mov		r0, r4
+	add		r0, #gameMap
+	mov		r1, r8
+	//bl		drawTile
 	bl		bounceVert
 	b		ballTop
 	
-	//DO STUFFFFF
 	
 ballMVGood:	
 	ldr		r0, [r4, #ballX]
@@ -131,102 +144,62 @@ ballMVGood:
 	bl		drawBall
 	
 	subs	r5, #1
-stuff:	bNE		ballTop
+	bNE		ballTop
 	
 	
-	pop		{r4-r7, pc}
+	pop		{r4-r8, pc}
 /////////////////////////////////////////////////
+decrementBrick:
+@r0 - tile number
+	ldr		r1, =gameState
+	add		r1, #gameMap
+	
+	ldr		r2, [r1, r0]
+	//VALUE PACK COMPS
+	
+	sub		r2, #1
+	str		r2, [r1, r0]
+	
+	bx		lr
+////////////////////////////////////////////
 checkTileBall:
 @ r0 - x
 @ r1 - y
+@ r2 - corner #
 	push	{r4-r7, lr}
 	mov		r4, r0
 	mov		r5, r1
-	mov		r6, #0
+	mov		r6, r2
 	ldr		r7, =gameState
 	add		r7, #gameMap
-	
-	bl		cordToTile
-	ldrb	r0, [r7, r0]
-	cmp		r0, #0
-	beq		checkTBNxt1
-	mov		r6, r0
-	
-checkTBNxt1:
+	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	bl		getBallSize
-	add		r0, r4		//x + ball size
-	mov		r1, r5
-	bl		cordToTile
-	ldrb	r0, [r7, r0]
-	cmp		r0, #0
-	beq		checkTBNxt2
+	mov		r3, r0
 	
-	mov		r1, r6
-	bl		checkTBPriority
-	mov		r6, r0
+	cmp		r6, #1
+	addEQ	r4, r3
+	addEQ	r5, r3
+	bEQ		checkTBEnd
 	
+	cmp		r6, #2
+	addEQ	r5, r3
+	bEQ		checkTBEnd
 	
-	
-checkTBNxt2:
-	bl		getBallSize
-	add		r0, r5		//y + ball size
-	mov		r1, r0
-	mov		r0, r4
-	bl		cordToTile
-	ldrb	r0, [r7, r0]
-	cmp		r0, #0
-	beq		checkTBNxt3
-	
-	mov		r1, r6
-	bl		checkTBPriority
-	mov		r6, r0
-	
-checkTBNxt3:
-	bl		getBallSize
-	mov		r1, r0
-	add		r0, r4		//x + ball size
-	add		r1, r5		//y + ball size
-	bl		cordToTile
-	ldrb	r0, [r7, r0]
-	cmp		r0, #0
-	beq		checkTBEnd
-	
-	mov		r1, r6
-	bl		checkTBPriority
-	mov		r6, r0
-	
+	cmp		r6, #3
+	addEQ	r4, r3
 	
 	
 checkTBEnd:
-	mov		r0, r6
+	mov		r0, r4
+	mov		r1, r5
+	bl		cordToTile
+	mov		r1, r0
+	ldr		r0, [r7, r1]
+	
 	pop		{r4-r7, pc}
 	
 /////////////////////////////////////////////
-checkTBPriority: @returns tile type with higher priority
-@ r0 - new tile type
-@ r1 - current tile type
-	cmp		r0, r1		//if they are equal, return new(doesnt matter)
-	bxeq	lr
-	
-	cmp		r1, #0		//if current tile is 0(new not 0), return new
-	bxeq	lr
-	
-	cmp		r0, #0		//if new tile 0(current not 0), return current
-	moveq	r0, r1
-	bxeq	lr
-	
-	cmp		r1, #255	//if current tile is 255(new tile not 0 or 255), return new
-	bxeq	lr
-	
-	cmp		r1, #254	//if current tile 254(current not 0, 255)
-	cmpeq	r0, #255	//and new tile 255, return current
-	moveq	r0, r1
-	bxeq	lr
-	
-	bx		lr
-				//default return new
-	
-/////////////////////////////////////////////
+
 getBallOffsets:@returns r0 - x offset, r1 - y offset
 @r0 - ball direction
 @r1 - ball angle
