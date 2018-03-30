@@ -89,11 +89,12 @@ test:
 
 ////////////////////////////////////////////////////
 
-.global DrawMenu
-DrawMenu:
-
-	push { r4-r10, lr }
+.global DrawScreen
+DrawScreen:
+@	r0 - Address of screen to print
+	push { r4-r11, lr }
 	
+	mov	r11, r0
 	mov r4, #TOP_LEFT_X
 	mov	r5, #TOP_LEFT_Y
 	
@@ -105,25 +106,24 @@ DrawMenu:
 	
 	mov r9, r4
 	mov r10, r5
-MenuLine$:
-	ldr r0, =menuImg
-	ldr	r2, [r0, r8, lsl #2]
+ScreenLine$:
+	ldr	r2, [r11, r8, lsl #2]
 	mov	r0, r9
 	mov r1, r10
 	bl DrawPixel
 	
 	add	r9, #1
 	add	r8, #1
-MenuLineTest$:
+ScreenLineTest$:
 	cmp	r9, r6
-	bLT MenuLine$
+	bLT ScreenLine$
 
 	add r10, #1
 	cmp r10, r7
 	movLE r9, r4
-	bLT  MenuLine$
+	bLT  ScreenLine$
 	
-	pop	{ r4-r10, pc }
+	pop	{ r4-r11, pc }
 
 /////////////////////
 .global EraseArrow
