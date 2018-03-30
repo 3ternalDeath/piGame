@@ -2,7 +2,7 @@
 //0 = floor
 //255 = wall
 //254 = roof
-//253 = bottom
+//253 = lava
 //1 = brick, 1 more hit
 //2 = brick, 2 more hits
 //3 = brick, 3 more hits

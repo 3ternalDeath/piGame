@@ -237,7 +237,6 @@ wall:
 	// Check if tile is a floor
 Tile_next1:
 	cmp		r5, #0
-	cmpNE	r5, #253
 	bNE		Tile_next2
 	
 	ldr		r2, =0xFF000000		// Black
@@ -274,8 +273,15 @@ Tile_next4:
 	
 	// Brick has 1 strength
 Tile_next5:
-
+	cmp		r5, #1
+	bNE		Tile_next6
+	
 	ldr		r2, =0xFFBAAF12
+	bl		drawSquare
+	b		Tile_end
+	
+Tile_next6:
+	ldr		r2, =0xFFD63208
 	bl		drawSquare
 Tile_end:
 	
