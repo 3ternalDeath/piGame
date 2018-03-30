@@ -13,7 +13,7 @@
 	.equ	topLeftXGame, TOP_LEFT_X
 	.equ	topLeftYGame, TOP_LEFT_Y + 50 //for printing score and lives
 	.equ	paddleY, (TOP_LEFT_Y + (25*TILE_SIZE)) - 50 //50 is the hight of the paddle
-
+	.equ	padY, (25*TILE_SIZE) - 50
 @ Contains the draw functions
 
 .text

@@ -136,7 +136,8 @@ mvBlBnc3:
 	
 ballMVMbyGood:
 	bl		getPadY
-	mov		r1, r7
+	ldr		r1, [r4, #ballY]
+	add		r1, r7
 	cmp		r1, r0
 	bLT		ballMVGood
 so:	add		r0, #2
@@ -529,9 +530,9 @@ gameState:
 	.byte 	25, 50, 75, 100	// paddleoff
 	.int 	315				// ballX(top left RELITIVE pixil)
 	.int	675				// ballY(top left RELITIVE pixil)
-	.byte	4				// ballspeed
+	.byte	1				// ballspeed
 	.byte	45				// ballangle
-	.byte	4				// balldirection
+	.byte	3				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	.byte	1				// ballanchor, 1 if anchored, 0 if not
 	.int	0				// score
