@@ -57,7 +57,7 @@ mainGameLoop:
 
 	
 ///////////////////////////////////////////////////////
-update:
+update:							//called every cycle, basicly game transition
 	push	{r4, lr}
 	
 	mov		r4, r0
@@ -86,46 +86,56 @@ update:
 	
 	pop		{r4, pc}
 //////////////////////////////////////////////
-mvValPk:
+mvValPk:												//moves value pack down to paddle levle(if there is one)
 	ldr		r0, =gameState
 	ldrb	r1, [r0, #valPk]
 	cmp		r1, #0
 	bxEQ	lr				//insta return
 	
-	push	{r4, lr}
+ok:	push	{r4-r6, lr}
 	
-uh:	mov		r4, r0
+	mov		r4, r0
 	
 	bl		getPadY
-	
 	ldr		r1, [r4, #valPkY]
-	add		r1, #7
+	add		r1, #14
 	
 	cmp		r1, r0
 	bGE		mvValPkStop
-	sub		r1, #7
-	ldr		r0, [r4, #valPkX]
 	
-	bl 		cordToTile
+	ldr		r5, [r4, #valPkX]
+	ldr		r6, [r4, #valPkY]
+	
+	bl		cordToTile
+	
 	mov		r1, r0
-	mov		r0, r4
+	sub		r1, #2
+	add		r0, r4, #gameMap
 	bl		drawTile
 	
-	bl		getTileSize
+	bl		getTileSize			// Draw Value Pack Black
 	mov		r3, r0
-	ldr		r0, [r4, #valPkX]
-	ldr		r1, [r4, #valPkY]
-	add		r1, #6
-	str		r1, [r4, #valPkY]
-	ldr		r2, =#0xFF32CD32
+	mov		r0, r5
+	mov		r1, r6
+	ldr		r2, =#0xff000000
 	bl		drawRelSquare
+	add		r6, #1
+	
+	bl		getTileSize			// Draw Value Pack White
+	mov		r3, r0
+	mov		r0, r5
+	mov		r1, r6
+	ldr		r2, =#0xffffffff
+	bl		drawRelSquare
+	
+	str		r6, [r4, #valPkY]
 	
 	
 mvValPkStop:
-	pop		{r4, lr}
+	pop		{r4-r6, pc}
 
 //////////////////////////////////////////
-mvBall:	
+mvBall:							//moving and bouncing of the ball
 	push	{r4-r8, lr}
 	ldr		r4, =gameState
 	ldrb	r5, [r4, #ballSpd]
@@ -147,9 +157,10 @@ ballTop:
 	ldrb	r2, [r4, #ballDir]
 	add		r1, r7
 	bl		checkTileBall
+	mov		r8, r1
 	cmp		r0, #0
-	beq		ballMVMbyGood
-	
+	beq		ballMVMbyGood				//bounces start
+										//always b to ball top to get new offsets when bouncing
 	cmp		r0, #255		//side wall
 	bNE		mvBlBnc1
 	bl		bounceHori
@@ -169,8 +180,8 @@ mvBlBnc2:
 	//DO STUFFFFF
 	
 mvBlBnc3:
-	mov		r8, r1
-	mov		r0, r1
+//	mov		r8, r1
+	mov		r0, r8
 	bl		decrementBrick
 	mov		r0, r4
 	add		r0, #gameMap
@@ -192,10 +203,11 @@ ballMVMbyGood:
 	cmp		r8, r0
 	bGT		ballMVGood
 
-	bl		bouncePaddle
+	bl		bouncePaddle				//bouncing off paddle
 	cmp		r0, #-1
 	bNE		ballTop
 	
+	//TODO: DEATH BY LAVA
 	
 ballMVGood:	
 	ldr		r0, [r4, #ballX]
@@ -203,7 +215,7 @@ ballMVGood:
 	add		r0, r6
 	add		r1, r7
 	str		r0, [r4, #ballX]
-	str		r1, [r4, #ballY]
+	str		r1, [r4, #ballY]			//move done, draw
 	bl		drawBall
 
 	
@@ -213,7 +225,7 @@ ballMVGood:
 	
 	pop		{r4-r8, pc}
 /////////////////////////////////////////////////
-bouncePaddle:
+bouncePaddle:						//figures out wher ball goes when it hits paddle
 	push	{r4-r5, lr}
 	ldr		r5, =gameState
 	ldr		r1, [r5, #ballX]
@@ -271,59 +283,55 @@ bPadGud:
 bPadMiss:
 	pop		{r4-r5, pc}
 ///////////////////////////////////////////
-decrementBrick:
-	push	{r4, lr}
+decrementBrick:							//reduce hardness of brick and init value pack stuff
+	push	{r4 - r5, lr}
 @r0 - tile number
 	ldr		r4, =gameState
 	add		r4, #gameMap
+	mov		r5, r0
 	
-	ldrb		r2, [r4, r0]
+	ldrb		r2, [r4, r5]
 	//VALUE PACK COMPS
 	cmp		r2, #5
-	bNE		decBrk1
-	ldrb	r2, [r4, #valPk-gameMap]
-	cmp		r2, #0
-	movNE	r2, #1
-	bNE 	decBrk2
-	mov		r2, #1
-	strb	r2, [r4, #valPk-gameMap]
-	bl		tileToCord
-	str		r0, [r4, #valPkX-gameMap]
-	str		r1, [r4, #valPkY-gameMap]
-	mov	r2, #0
-	b		decBrk3
-
-decBrk1:
+	movEQ	r2, #1
+	bEQ		decrementValPk
+	
 	cmp		r2, #9
-	bNE		decBrk2
-	ldrb	r2, [r4, #valPk-gameMap]
-	cmp		r2, #0
-	movNE	r2, #1
-	bNE 	decBrk2
-	mov		r2, #2
+	movEQ	r2, #2
+	bEQ		decrementValPk 
+	
+	sub		r2, #1
+	strb	r2, [r4, r5]
+	
+	mov		r0, r4
+	mov		r1, r2
+	bl		drawTile
+	
+	pop		{r4-r5, pc}
+
+
+decrementValPk:
+	ldrb	r3, [r4, #valPk-gameMap]
+	cmp		r3, #0
+	bNE		decVPEnd
+
 	strb	r2, [r4, #valPk-gameMap]
+	
+	mov		r0, r5
 	bl		tileToCord
 	str		r0, [r4, #valPkX-gameMap]
 	str		r1, [r4, #valPkY-gameMap]
-	mov		r2, #0
 	
-	b		decBrk3
-	
-	
-decBrk2:
-	sub		r2, #1
-	strb	r2, [r4, r0]
-
-decBrk3:
-	cmp		r2, #0
-	ldrb	r2, [r4, #(-gameMap + numBricks)]
-	subeq	r2, #1
-	strb	r2, [r4, #(-gameMap + numBricks)]
-	
-	pop		{r4, pc}
-////////////////////////////////////////////
-checkTileBall:
-@ r0 - x
+decVPEnd:
+	mov		r0, #0
+	strb	r0, [r4, r5]
+	mov		r0, r4
+	mov		r1, r5
+	bl		drawTile
+	pop		{r4-r5, pc}
+//////////////////////////////////////////
+checkTileBall:								//figure out what type of tile is directly in its way(only checks one corner)
+@ r0 - x									//if goint up/right only check top right corner...
 @ r1 - y
 @ r2 - corner #
 	push	{r4-r7, lr}
@@ -359,6 +367,8 @@ checkTBEnd:
 	pop		{r4-r7, pc}
 	
 /////////////////////////////////////////////
+
+								//get movement values for x and y based on direction and angle
 
 getBallOffsets:@returns r0 - x offset, r1 - y offset
 @r0 - ball direction
@@ -396,7 +406,8 @@ getBallOffsets:@returns r0 - x offset, r1 - y offset
 	
 	bx		lr
 ////////////////////////////////////////////
-bounceRev:
+bounceRev:							//never used... for real
+									//sends ball back the way it came
 	ldr		r0, = gameState
 	ldrb		r1, [r0, #ballDir]
 	
@@ -416,7 +427,7 @@ bounceRev:
 	
 	bx		lr
 //////////////////////////////////////////////////
-bounceVert:
+bounceVert:							//flips verticle direction of ball
 	ldr		r0, = gameState
 	ldrb	r1, [r0, #ballDir]
 	
@@ -436,7 +447,7 @@ bounceVert:
 	
 	bx		lr
 //////////////////////////////////////////////////////
-bounceHori: 
+bounceHori: 						//flips horizontal direction of ball
 	ldr		r0, = gameState
 	ldrb	r1, [r0, #ballDir]
 	
@@ -459,7 +470,7 @@ bounceHori:
 	bx		lr
 	
 /////////////////////////////////////////////////
-mvPaddle:
+mvPaddle:								//move paddle 1 pixel at a time speed amt of times
 	@ r0 - direction: -1, 0, 1
 	@ r1 - speed/amt of loop
 	cmp		r0, #0
@@ -513,6 +524,7 @@ mvPadRet:
 	pop		{r4-r7, pc}
 ////////////////////////////////////////////////////
 checkTilePaddle:	//doesnt do the tile thing
+					//checks if paddle will exceed wall boundries
 	push	{r4, lr}
 	mov		r4, r0
 	bl		getTileSize
@@ -531,7 +543,7 @@ checkTilePaddle:	//doesnt do the tile thing
 
 /////////////////////////////////////////////
 .global tileToCord
-tileToCord:
+tileToCord:					//convert from tile number to x-y coords
 @ r0 - tile number
 	push	{lr}
 	mov		r1, r0
@@ -543,18 +555,20 @@ TTCTop:
 	sub 	r1, #20
 TTCTest:
 	cmp 	r1, #20
-	bGE 	TTCTop
+	bGT 	TTCTop
 	
+	bl		getTileSize
 	mov		r3, r0
 	mul		r0, r1, r3
 	mul		r1, r2, r3
 	
 	pop		{pc}
 ///////////////////////////////////////////
-.global cordToTile
+.global cordToTile			//convert from coords to tile number
 cordToTile:
 @ r0 -x
 @ r1 -y
+	
 	
 	lsr		r0, #5
 	lsr		r1, #5
@@ -562,9 +576,9 @@ cordToTile:
 	mul		r1, r3
 	add		r0, r1
 	bx		lr
-//////////////////////////////	3///////////
+/////////////////////////////////////////
 
-initMap:
+initMap:					//copy map from file to gameMap
 		ldr		r0, =map1
 		ldr		r1, =gameState
 		add		r1, #numBricks
@@ -583,7 +597,7 @@ mapInitTop:
 		bx		lr
 ////////////////////////////////////////////////	
 
-GameMenu:
+GameMenu:					//i cant comment this i didnt make it!
 		push { r4, lr }
 		ldr		r0, =menuImg
 		bl		DrawScreen

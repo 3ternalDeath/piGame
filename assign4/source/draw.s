@@ -138,7 +138,7 @@ actualDrawPaddle:
 	bNE		paddle_top
 	
 	pop { r4-r8, pc } 
-///////////////////////////////////////////////
+///////////////////////////////////////////////get sum(some) stuff
 .global getTileSize
 getTileSize:
 	mov		r0, #TILE_SIZE
@@ -297,7 +297,7 @@ Tile_end:
 	
 	pop { r4, r5, pc }
 ///////////////////////////////////////////////////////////////
-.global drawRelSquare
+.global drawRelSquare			//add off sets before calling draw squar
 drawRelSquare:
 @ r0 - top left x co-ordinate
 @ r1 - top left y co-ordinate
