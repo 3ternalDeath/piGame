@@ -94,6 +94,11 @@ getTileSize:
 getBallSize:
 	mov		r0, #BALL_SIZE
 	bx		lr
+////////////////////////////////////////////////
+.global	getPadY
+getPadY:
+	mov	r0, #paddleY
+	bx  lr
 ////////////////////////////////////////////////////////	
 @Deprecated
 drawBrick:

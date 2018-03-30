@@ -1,3 +1,4 @@
+.section .data
 .global arrowImg
 arrowImg:
 

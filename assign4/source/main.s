@@ -103,7 +103,7 @@ ballTop:
 	add		r1, r7
 	bl		checkTileBall
 	cmp		r0, #0
-	beq		ballMVGood
+	beq		ballMVMbyGood
 	
 	cmp		r0, #255		//side wall
 	bNE		mvBlBnc1
@@ -119,19 +119,30 @@ mvBlBnc1:
 mvBlBnc2:	
 	cmp		r0, #253		//lava
 	bNE		mvBlBnc3
+	bl		bounceVert
 	b		ballTop
 	//DO STUFFFFF
 	
 mvBlBnc3:
 	mov		r8, r1
 	mov		r0, r1
-	//bl		decrementBrick
+	bl		decrementBrick
 	mov		r0, r4
 	add		r0, #gameMap
 	mov		r1, r8
-	//bl		drawTile
+	bl		drawTile
 	bl		bounceVert
 	b		ballTop
+	
+ballMVMbyGood:
+	bl		getPadY
+	mov		r1, r7
+	cmp		r1, r0
+	bLT		ballMVGood
+so:	add		r0, #2
+	cmp		r1, r0
+	bGT		ballMVGood
+	bl		bouncePaddle
 	
 	
 ballMVGood:	
@@ -142,6 +153,7 @@ ballMVGood:
 	str		r0, [r4, #ballX]
 	str		r1, [r4, #ballY]
 	bl		drawBall
+
 	
 	subs	r5, #1
 	bNE		ballTop
@@ -149,6 +161,42 @@ ballMVGood:
 	
 	pop		{r4-r8, pc}
 /////////////////////////////////////////////////
+bouncePaddle:
+	ldr		r0, =gameState
+	ldr		r1, [r0, #ballX]
+	ldr		r2, [r0, #padX]
+	ldrb	r3, [r0, #padOff3]
+	
+	cmp		r1, r2
+	bLT		bPadMiss
+	cmp		r1, r3
+	bGT		bPadMiss
+	
+	ldrb	r2, [r0, #padOff1]
+	cmp		r1, r2
+	bLE		bPadL
+bPadR:
+	mov		r3, #3
+	strb	r3, [r0, #ballDir]
+	ldrb	r2, [r0, #padOff2]
+	cmp		r1, r2
+	movGT	r3, #45
+	movLE	r3, #60
+	b		bPadGud
+bPadL:
+	mov		r3, #4
+	strb	r3, [r0, #ballDir]
+	ldrb	r2, [r0, #padOff2]
+	cmp		r1, r2
+	movLT	r3, #45
+	movGE	r3, #60
+
+bPadGud:
+	strb	r3, [r0, #ballDir]
+
+bPadMiss:
+	bx		lr
+///////////////////////////////////////////
 decrementBrick:
 @r0 - tile number
 	ldr		r1, =gameState
@@ -159,6 +207,11 @@ decrementBrick:
 	
 	sub		r2, #1
 	str		r2, [r1, r0]
+	
+	cmp		r2, #0
+	ldrb	r2, [r1, #(-gameMap + numBricks)]
+	subeq	r2, #1
+	strb	r2, [r1, #(-gameMap + numBricks)]
 	
 	bx		lr
 ////////////////////////////////////////////
@@ -194,7 +247,7 @@ checkTBEnd:
 	mov		r1, r5
 	bl		cordToTile
 	mov		r1, r0
-	ldr		r0, [r7, r1]
+	ldrb	r0, [r7, r1]
 	
 	pop		{r4-r7, pc}
 	
@@ -476,7 +529,7 @@ gameState:
 	.byte 	25, 50, 75, 100	// paddleoff
 	.int 	315				// ballX(top left RELITIVE pixil)
 	.int	675				// ballY(top left RELITIVE pixil)
-	.byte	2				// ballspeed
+	.byte	4				// ballspeed
 	.byte	45				// ballangle
 	.byte	4				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
