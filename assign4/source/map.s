@@ -2,6 +2,7 @@
 //0 = floor
 //255 = wall
 //254 = roof
+//253 = bottom
 //1 = brick, 1 more hit
 //2 = brick, 2 more hits
 //3 = brick, 3 more hits
@@ -67,11 +68,16 @@ map1:
 		.byte	255
 	.endr
 	
-	//12 lines of empty
-	.rept	12
+	//11 lines of empty
+	.rept	11
 		.byte 	255
 		.rept 	18
 			.byte	0 
 		.endr
 		.byte	255
+	.endr
+	
+	//1 line of death
+	.rept	20
+		.byte	253
 	.endr

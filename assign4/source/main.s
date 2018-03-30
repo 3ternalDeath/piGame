@@ -104,16 +104,20 @@ ballTop:
 	cmp		r0, #0
 	beq		ballMVGood
 	
-	cmpne	r0, #255
-	bleq	bounceHori
-	beq		ballTop
-	
-	cmpne	r0, #254
-	bleq	bounceVert
-	beq		ballTop
-	
-	blne	bounceVert
-	bne		ballTop
+	cmp		r0, #255
+	bNE		mvBlBnc1
+	bl		bounceHori
+	b		ballTop
+
+mvBlBnc1:	
+	cmp		r0, #254
+	bNE		mvBlBnc2
+	bl		bounceVert
+	b		ballTop
+
+mvBlBnc2:	
+	bl		bounceVert
+	b		ballTop
 	
 	//DO STUFFFFF
 	
@@ -240,6 +244,8 @@ getBallOffsets:@returns r0 - x offset, r1 - y offset
 	
 	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	
+	mov		r1, #1
+	
 	cmp		r0, #2
 	moveq	r0, #-1
 	moveq	r1, #1
@@ -259,7 +265,7 @@ getBallOffsets:@returns r0 - x offset, r1 - y offset
 ////////////////////////////////////////////
 bounceRev:
 	ldr		r0, = gameState
-	ldr		r1, [r0, #ballDir]
+	ldrb		r1, [r0, #ballDir]
 	
 	cmp		r1, #1
 	movLE	r2, #4
@@ -279,10 +285,10 @@ bounceRev:
 //////////////////////////////////////////////////
 bounceVert:
 	ldr		r0, = gameState
-	ldr		r1, [r0, #ballDir]
+	ldrb	r1, [r0, #ballDir]
 	
 	cmp		r1, #1
-	movLE	r2, #3
+	movEQ	r2, #3
 	
 	cmp		r1, #2
 	movEQ	r2, #4
@@ -291,7 +297,7 @@ bounceVert:
 	movEQ	r2, #1
 	
 	cmp		r1, #4
-	movGE	r2, #2
+	movEQ	r2, #2
 	
 	strb		r2, [r0, #ballDir]
 	
@@ -299,12 +305,12 @@ bounceVert:
 //////////////////////////////////////////////////////
 bounceHori: 
 	ldr		r0, = gameState
-	ldr		r1, [r0, #ballDir]
+	ldrb	r1, [r0, #ballDir]
 	
 	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	
 	cmp		r1, #1
-	movLE	r2, #2
+	movEQ	r2, #2
 	
 	cmp		r1, #2
 	movEQ	r2, #1
@@ -313,7 +319,7 @@ bounceHori:
 	movEQ	r2, #4
 	
 	cmp		r1, #4
-	movGE	r2, #3
+	movEQ	r2, #3
 	
 	strb		r2, [r0, #ballDir]
 	

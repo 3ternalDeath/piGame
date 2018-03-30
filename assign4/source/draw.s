@@ -180,6 +180,7 @@ wall:
 	// Check if tile is a floor
 Tile_next1:
 	cmp		r5, #0
+	cmpNE	r5, #253
 	bNE		Tile_next2
 	
 	ldr		r2, =0xFF000000		// Black
