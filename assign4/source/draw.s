@@ -27,13 +27,15 @@
 	.equ	ballSpd, 	16
 	.equ	ballAng, 	17
 	.equ	ballDir, 	18
-	.equ	ballAnc, 	19
+	.equ	valPk,	 	19
 	.equ	score, 		20
 	.equ	lives, 		24
 	.equ	event, 		28
-	.equ	lose, 		29
-	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
-	.equ	gameMap, 	31
+	.equ	bigPad,		29
+	.equ	valPkX,		30
+	.equ	valPkY,		34
+	.equ	numBricks, 	38		//numBricks MUST be right before gameMap
+	.equ	gameMap, 	39
 	
 .text
 
@@ -246,6 +248,8 @@ Tile_next1:
 	// Check if brick has 4 strength
 Tile_next2:
 	cmp		r5, #4
+	cmpNE	r5, #8
+	cmpNE	r5, #12
 	bNE		Tile_next3
 	
 	ldr		r2, =0xFF79199C 	// Purple
@@ -256,6 +260,8 @@ Tile_next2:
 	// Check if brick has 3 strength
 Tile_next3:
 	cmp		r5, #3
+	cmpNE	r5, #7
+	cmpNE	r5, #11
 	bNE		Tile_next4
 	
 	ldr		r2, =0xFF0F15BA		// Blue
@@ -265,6 +271,8 @@ Tile_next3:
 	// Check if brick has 2 strength
 Tile_next4:
 	cmp		r5, #2
+	cmpNE	r5, #6
+	cmpNE	r5, #10
 	bNE		Tile_next5
 	
 	ldr		r2, =0xFFCC2D30		// Red
@@ -274,6 +282,8 @@ Tile_next4:
 	// Brick has 1 strength
 Tile_next5:
 	cmp		r5, #1
+	cmpNE	r5, #5
+	cmpNE	r5, #9
 	bNE		Tile_next6
 	
 	ldr		r2, =0xFFBAAF12

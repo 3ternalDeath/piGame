@@ -12,13 +12,15 @@
 	.equ	ballSpd, 	16
 	.equ	ballAng, 	17
 	.equ	ballDir, 	18
-	.equ	ballAnc, 	19
+	.equ	valPk,	 	19
 	.equ	score, 		20
 	.equ	lives, 		24
 	.equ	event, 		28
-	.equ	lose, 		29
-	.equ	numBricks, 	30		//numBricks MUST be right before gameMap
-	.equ	gameMap, 	31
+	.equ	bigPad,		29
+	.equ	valPkX,		30
+	.equ	valPkY,		34
+	.equ	numBricks, 	38		//numBricks MUST be right before gameMap
+	.equ	gameMap, 	39
 
 ////////////////////////////////////////////////////
 .global main
@@ -76,6 +78,7 @@ update:
 	//MUST MOVE PADDLE FIRST
 	bl		mvPaddle		
 	//OTHER MOVES
+	bl		mvValPk
 	
 				
 	//MUST MOVE BALL LAST
@@ -83,6 +86,44 @@ update:
 	
 	pop		{r4, pc}
 //////////////////////////////////////////////
+mvValPk:
+	ldr		r0, =gameState
+	ldrb	r1, [r0, #valPk]
+	cmp		r1, #0
+	bxEQ	lr				//insta return
+	
+	push	{r4, lr}
+	
+uh:	mov		r4, r0
+	
+	bl		getPadY
+	
+	ldr		r1, [r4, #valPkY]
+	add		r1, #7
+	
+	cmp		r1, r0
+	bGE		mvValPkStop
+	sub		r1, #5
+	ldr		r0, [r4, #valPkX]
+	
+	bl 		cordToTile
+	mov		r1, r0
+	mov		r0, r4
+	bl		drawTile
+	
+	bl		getTileSize
+	mov		r3, r0
+	ldr		r0, [r4, #valPkX]
+	ldr		r1, [r4, #valPkY]
+	add		r1, #6
+	ldr		r2, =#0xFF32CD32
+	bl		drawSquare
+	
+	
+mvValPkStop:
+	pop		{r4, lr}
+
+//////////////////////////////////////////
 mvBall:	
 	push	{r4-r8, lr}
 	ldr		r4, =gameState
@@ -230,22 +271,55 @@ bPadMiss:
 	pop		{r4-r5, pc}
 ///////////////////////////////////////////
 decrementBrick:
+	push	{r4, lr}
 @r0 - tile number
-	ldr		r1, =gameState
-	add		r1, #gameMap
+	ldr		r4, =gameState
+	add		r4, #gameMap
 	
-	ldr		r2, [r1, r0]
+	ldrb		r2, [r4, r0]
 	//VALUE PACK COMPS
-	
-	sub		r2, #1
-	str		r2, [r1, r0]
-	
+	cmp		r2, #5
+	bNE		decBrk1
+	ldrb	r2, [r4, #valPk-gameMap]
 	cmp		r2, #0
-	ldrb	r2, [r1, #(-gameMap + numBricks)]
-	subeq	r2, #1
-	strb	r2, [r1, #(-gameMap + numBricks)]
+	movNE	r2, #1
+	bNE 	decBrk2
+	mov		r2, #1
+	strb	r2, [r4, #valPk-gameMap]
+	bl		tileToCord
+	str		r0, [r4, #valPkX-gameMap]
+	str		r1, [r4, #valPkY-gameMap]
+	mov	r2, #0
+	b		decBrk3
+
+decBrk1:
+	cmp		r2, #9
+	bNE		decBrk2
+	ldrb	r2, [r4, #valPk-gameMap]
+	cmp		r2, #0
+	movNE	r2, #1
+	bNE 	decBrk2
+	mov		r2, #2
+	strb	r2, [r4, #valPk-gameMap]
+	bl		tileToCord
+	str		r0, [r4, #valPkX-gameMap]
+	str		r1, [r4, #valPkY-gameMap]
+	mov		r2, #0
 	
-	bx		lr
+	b		decBrk3
+	
+	
+decBrk2:
+	sub		r2, #1
+	strb	r2, [r4, r0]
+
+decBrk3:
+	cmp		r2, #0
+	ldrb	r2, [r4, #(-gameMap + numBricks)]
+	subeq	r2, #1
+	strb	r2, [r4, #(-gameMap + numBricks)]
+	
+	pop		{r4, pc}
 ////////////////////////////////////////////
 checkTileBall:
 @ r0 - x
@@ -437,7 +511,7 @@ mvPadRet:
 	bl		drawPaddle
 	pop		{r4-r7, pc}
 ////////////////////////////////////////////////////
-checkTilePaddle:
+checkTilePaddle:	//doesnt do the tile thing
 	push	{r4, lr}
 	mov		r4, r0
 	bl		getTileSize
@@ -455,6 +529,27 @@ checkTilePaddle:
 	pop		{r4, pc}
 
 /////////////////////////////////////////////
+.global tileToCord
+tileToCord:
+@ r0 - tile number
+	push	{lr}
+	mov		r1, r0
+	bl		getTileSize
+	mov		r2, #0
+	b		TTCTest
+TTCTop:
+	add		r2, #1
+	sub 	r1, #20
+TTCTest:
+	cmp 	r1, #20
+	bGE 	TTCTop
+	
+	mov		r3, r0
+	mul		r0, r1, r3
+	mul		r1, r2, r3
+	
+	pop		{pc}
+///////////////////////////////////////////
 .global cordToTile
 cordToTile:
 @ r0 -x
@@ -466,7 +561,7 @@ cordToTile:
 	mul		r1, r3
 	add		r0, r1
 	bx		lr
-/////////////////////////////////////////
+//////////////////////////////	3///////////
 
 initMap:
 		ldr		r0, =map1
@@ -529,18 +624,20 @@ gameState:
 //NEED TO INIT SOME OF THESE
 
 	.int	270				// paddleX(left most RELITIVE pixil)
-	.byte 	30, 50, 70, 100	// paddleoff
+	.byte 	25, 50, 75, 100	// paddleoff
 	.int 	315				// ballX(top left RELITIVE pixil)
 	.int	675				// ballY(top left RELITIVE pixil)
 	.byte	1				// ballspeed
 	.byte	45				// ballangle
 	.byte	3				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
-	.byte	1				// ballanchor, 1 if anchored, 0 if not
+	.byte	0				// valupack, 0 if inactive, 1 if speed down, 2 if enlarge
 	.int	0				// score
 	.int	1				// lives
 	.byte	0				// event, 0 = normal, 1 = win, 2 = lose
-	.byte	0				// lose, 1 if lost, 0 if not
+	.byte	0				// bigPaddle, 0 if not, 1 if yes
+	.int	0				// valPkX
+	.int	0				// valPkY
 	.byte	0				// numBricks
 	.rept	500				// game map 20*25 tiles
 		.byte 0

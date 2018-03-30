@@ -32,9 +32,11 @@ map1:
 	//2 lines of HARD bricks
 	.rept	2
 		.byte 	255
-		.rept 	18
+		.byte	12
+		.rept 	16
 			.byte	4 
 		.endr
+		.byte	8
 		.byte	255
 	.endr
 	
@@ -68,8 +70,14 @@ map1:
 		.byte	255
 	.endr
 	
-	//11 lines of empty
-	.rept	11
+	.byte 	255
+		.rept 	18
+			.byte	5 
+		.endr
+		.byte	255
+	
+	//10 lines of empty
+	.rept	10
 		.byte 	255
 		.rept 	18
 			.byte	0 
