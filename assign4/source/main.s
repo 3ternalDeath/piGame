@@ -489,7 +489,8 @@ mapInitTop:
 
 GameMenu:
 		push { r4, lr }
-		bl		DrawMenu
+		ldr		r0, =menuImg
+		bl		DrawScreen
 		mov		r4, #0
 		bl		DrawArrow
 MenuChkLoop:
