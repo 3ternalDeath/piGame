@@ -2,7 +2,7 @@
 ////////////////CONFIG////////////////////////
 
 .equ	TOP_LEFT_X,	50
-.equ	TOP_LEFT_Y, 50
+.equ	TOP_LEFT_Y, 150
 .equ	PADDLE_SIZE_DEFAULT, 100
 .equ	PADDLE_SIZE_POWERUP, 200
 .equ	BALL_SIZE, 15
@@ -70,6 +70,7 @@ first_test:
 	ldr		r1, [r4, #ballY]
 	bl		drawBall
 	
+	bl		clearTopScreen		// Clear the top Score Screen
 	pop	{ r4, r5, pc }
 	
 ///////////////////////////////////////////////////////

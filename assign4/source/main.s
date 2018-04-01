@@ -301,15 +301,16 @@ bPadMiss:
 	pop		{r4-r5, pc}
 ///////////////////////////////////////////
 decrementBrick:							//reduce hardness of brick and init value pack stuff
-										// Increment the Score Counter
+										// Increments the Score Counter
 	push	{r4 - r5, lr}
 @r0 - tile number
 	ldr		r4, =gameState
 	
-	ldr		r5, [r4, #score]
+	ldr		r5, [r4, #score]			// Increase Score by 1
 	add		r5, #1
 	str		r5, [r4, #score]
 	
+		
 	add		r4, #gameMap
 	mov		r5, r0
 	
@@ -330,6 +331,7 @@ decrementBrick:							//reduce hardness of brick and init value pack stuff
 	mov		r1, r2
 	bl		drawTile
 	
+	bl		clearTopScreen				// Clear the Score Screen
 	pop		{r4-r5, pc}
 
 
@@ -351,6 +353,7 @@ decVPEnd:
 	mov		r0, r4
 	mov		r1, r5
 	bl		drawTile
+	bl		clearTopScreen				// Clear the Score Screen
 	pop		{r4-r5, pc}
 //////////////////////////////////////////
 checkTileBall:								//figure out what type of tile is directly in its way(only checks one corner)
@@ -650,7 +653,7 @@ GameInitTop:
 		mov		r3, #3
 		str		r3, [r1, #ballDir]
 		
-		mov		r3, #1
+		mov		r3, #9
 		str		r3, [r1, #lives]
 		
 		mov		r3, #0

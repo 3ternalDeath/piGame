@@ -6,6 +6,7 @@
 .equ	TOP_LEFT_X,	50
 .equ	TOP_LEFT_Y, 100
 .equ	score, 		20
+.equ	lives, 		24
 
 
 
@@ -187,52 +188,102 @@ ArrowLineTest$:
 
 .global DrawScore
 DrawScore:				// Draw the Player Score to the screen
+						// and the player lives
 	push	{r4-r7, lr}
 	
+	// Draw 'Lives:" to the Screen
+	mov			r0, #0
+	mov			r1, #40
+	mov			r2, #'L'
+	mov			r3, #3
+	bl			DrawChar
+	
+	mov			r0, #25
+	mov			r1, #40
+	mov			r2, #'i'
+	mov			r3, #3
+	bl			DrawChar
+	
+	mov			r0, #50
+	mov			r1, #40
+	mov			r2, #'v'
+	mov			r3, #3
+	bl			DrawChar
+	
+	mov			r0, #75
+	mov			r1, #40
+	mov			r2, #'e'
+	mov			r3, #3
+	bl			DrawChar
+	
+	mov			r0, #100
+	mov			r1, #40
+	mov			r2, #'s'
+	mov			r3, #3
+	bl			DrawChar
+	
+	mov			r0, #120
+	mov			r1, #40
+	mov			r2, #':'
+	mov			r3, #3
+	bl			DrawChar
+	
+	ldr			r0, =gameState
+	ldr			r2, [r0, #lives]
+	
+	mov			r0,	r2
+	bl			digitToAscii
+	mov			r2, r0
+	
+	mov			r0, #150
+	mov			r1, #40
+	mov			r3, #3
+	bl			DrawChar
+	
 	// Draw "Score:" to Screen
-	mov	r0, #0
-	mov	r1, #0
-	mov r2, #'S'
-	mov r3, #3
-	bl	DrawChar
+	mov			r0, #0
+	mov			r1, #0
+	mov 		r2, #'S'
+	mov 		r3, #3
+	bl			DrawChar
 	
-	mov	r0, #25
-	mov	r1, #0
-	mov	r2, #'c'
-	mov	r3, #3
-	bl	DrawChar
+	mov			r0, #25
+	mov			r1, #0
+	mov			r2, #'c'
+	mov			r3, #3
+	bl			DrawChar
 	
-	mov	r0, #50
-	mov	r1, #0
-	mov	r2, #'o'
-	mov r3, #3
-	bl DrawChar
+	mov			r0, #50
+	mov			r1, #0
+	mov			r2, #'o'
+	mov 		r3, #3
+	bl 			DrawChar
 		
-	mov	r0, #75
-	mov	r1, #0
-	mov	r2, #'r'
-	mov r3, #3
-	bl DrawChar
+	mov			r0, #75
+	mov			r1, #0
+	mov			r2, #'r'
+	mov 		r3, #3
+	bl 			DrawChar
 	
-	mov	r0, #100
-	mov	r1, #0
-	mov	r2, #'e'
-	mov r3, #3
-	bl DrawChar
+	mov			r0, #100
+	mov			r1, #0
+	mov			r2, #'e'
+	mov			 r3, #3
+	bl 			DrawChar
 	
-	mov	r0, #120
-	mov	r1, #0
-	mov	r2, #':'
-	mov r3, #3
-	bl DrawChar
+	mov			r0, #120
+	mov			r1, #0
+	mov			r2, #':'
+	mov 		r3, #3
+	bl 			DrawChar
 	
 	// Determine what the Score is
 	
-	ldr		r0, =gameState
-	ldr		r4, [r0, #score]		// Ones Place
-	mov		r5, #0					// Tens Place
-	mov		r6, #0					// Hundreds Place
-	b ScoreTest
+	ldr			r0, =gameState
+	ldr			r4, [r0, #score]		// Ones Place
+	mov			r5, #0					// Tens Place
+	mov			r6, #0					// Hundreds Place
+	b 			ScoreTest
 	
 ScoreLoop:
 	cmp		r4, #100
@@ -414,6 +465,37 @@ noPixel$:
 
 	add 	sp, #alloc
 	pop		{r4-r8, fp, pc}
+
+/////////////////////////////////////////////
+.global clearTopScreen
+clearTopScreen:
+	push	{r4-r7, lr}
+
+	mov		r4, #640
+	add		r4, #TOP_LEFT_X	// Find final pixel x
+	
+	mov		r5, #100
+	add		r5, #TOP_LEFT_Y	// Find final pixel y
+	
+	mov		r6, #TOP_LEFT_X
+	mov		r7, #TOP_LEFT_Y
+	
+clearTop:
+	mov 	r0, r6
+	mov		r1, r7
+	ldr		r2, =0xFF000000  	// Black
+	bl		DrawPixel
+	
+	add		r6, #1
+	cmp		r6, r4				// Check if Draw has reached the right of the screen
+	bLT		clearTop
+	
+	mov		r6, #TOP_LEFT_X
+	add		r7, #1
+	cmp		r7, r5				// Check if Draw has reached the bottom of the screen
+	bLT		clearTop
+
+	pop		{r4-r7, pc}
 
 @ Data section
 .section .data
