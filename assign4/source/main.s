@@ -73,7 +73,18 @@ mainGameLoopNext:
 	
 	ldr		r0, =GameOverImg
 	bl		DrawScreen
+	b		mainChkLoop
 
+	
+mainNotLose:
+
+	cmp		r2, #1				// If event is 2, show lost screen
+	bNE		mainNotWin
+	
+	ldr		r0, =GameWonImg
+	bl		DrawScreen
+	b		mainChkLoop
+	
 mainChkLoop:
 	bl 		Read_SNES
 	cmp		r0, #0
@@ -81,9 +92,9 @@ mainChkLoop:
 	mov		r0, #60000		// Give it a pause for buttons to reset
 	bl 		delayMicroseconds
 	b		Start
-	
-mainNotLose:
-    mov 	r0, #17500
+
+mainNotWin:
+    mov 	r0, #17500			// controls game speed
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -121,6 +132,9 @@ update:							//called every cycle, basicly game transition
 	bl		mvValPk
 	
 				
+	ldr		r1, =gameState
+	ldr		r0, [r1, #padX]
+	bl		drawPaddle
 	//MUST MOVE BALL LAST
 	bl		mvBall
 	
@@ -232,6 +246,25 @@ lifeNext:
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
+// Increases score and draws it to screen
+.global incScore
+incScore:
+@ r0 - amount to increase score by
+	push	{ r4-r5, lr }
+	mov		r4, r0
+	ldr		r0, =gameState
+	ldr		r1, [r0, #score]
+	add		r4, r1				// Calculate new score
+	
+	str		r4, [r0, #score]	// Store score
+	
+	bl		clearTopScreen
+	bl		DrawScore
+	pop		{ r4-r5, pc }
+	
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 initGame:					// copy map from file to gameMap
 							// Then initialize the State variables
@@ -239,8 +272,9 @@ initGame:					// copy map from file to gameMap
 		ldr		r0, =map1
 		ldr		r1, =gameState
 		add		r1, #numBricks
-		ldr		r3, [r0], #1	@num bricks
-		str		r3, [r1], #1
+		ldrb		r3, [r0], #1	@num bricks
+initGameTest:
+		strb		r3, [r1], #1
 		
 		mov		r2, #125		@500/4
 		
@@ -282,7 +316,7 @@ GameInitTop:
 		mov		r3, #3
 		str		r3, [r1, #ballDir]
 		
-		mov		r3, #3
+		mov		r3, #99
 		str		r3, [r1, #lives]
 		
 		mov		r3, #0
@@ -294,7 +328,6 @@ GameInitTop:
 		str		r3, [r1, #bigPad]
 		str		r3, [r1, #valPkX]
 		str		r3, [r1, #valPkY]
-		str		r3, [r1, #numBricks]
 		
 
 		bx		lr

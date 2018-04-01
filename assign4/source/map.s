@@ -13,7 +13,7 @@
 .global map1
 map1:
 	.byte	162
-	
+
 	//first line of tiles
 	.rept 20 
 		.byte 254 

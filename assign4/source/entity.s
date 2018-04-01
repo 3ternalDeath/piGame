@@ -25,59 +25,88 @@
 	.equ	gameMap, 	39
 	
 
+	.equ	TILE_SIZE, 32
+	.equ	padY, (25*TILE_SIZE) - 100
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
 .global mvValPk
-mvValPk:												//moves value pack down to paddle levle(if there is one)
+mvValPk:					//moves value pack down to paddle levle(if there is one)
 	ldr		r0, =gameState
 	ldrb	r1, [r0, #valPk]
 	cmp		r1, #0
-	bxEQ	lr				//insta return
+	bxEQ	lr					//	if no value pack is initialized
 	
-ok:	push	{r4-r6, lr}
-	
-	mov		r4, r0
-	
-	bl		getPadY
-	ldr		r1, [r4, #valPkY]
-	add		r1, #14
-	
-	cmp		r1, r0
-	bGE		mvValPkStop
+ok:	push	{r4-r7, lr}
+	mov		r4, r0				// Store reference to gameState
 	
 	ldr		r5, [r4, #valPkX]
 	ldr		r6, [r4, #valPkY]
+	mov		r0, r5
+	add		r1, r6, #32			// Find the x-value of the bottom left of the value Pack
+	bl		cordToTile				// Find the tile associated with the value pack coords
+	mov		r7, r0					// Put tile element number into r7
 	
-	bl		cordToTile
+	add		r0, r4, #gameMap
+	ldrb	r1, [r0, r7]			// Find value of tile
+	cmp		r1, #253
+	bNE		mvValPkNext
 	
-	mov		r1, r0
-	sub		r1, #2
+	bl		destroyValPk
+	b		mvValPkStop
+	
+mvValPkNext:	
+	mov		r1, r7
+	//sub		r1, #2
 	add		r0, r4, #gameMap
 	bl		drawTile
 	
 	bl		getTileSize			// Draw Value Pack Black
-	mov		r3, r0
-	mov		r0, r5
-	mov		r1, r6
-	ldr		r2, =#0xff000000
+	mov		r3, r0				// Move Size of tiles to r3
+	mov		r0, r5				// move valPack X pos
+	mov		r1, r6				// move valPack Y pos
+	ldr		r2, =#0xff000000	// Black
 	bl		drawRelSquare
-	add		r6, #1
+	
+	add		r6, #1				// Increase the Y value
 	
 	bl		getTileSize			// Draw Value Pack White
-	mov		r3, r0
-	mov		r0, r5
-	mov		r1, r6
-	ldr		r2, =#0xffffffff
+	mov		r3, r0				// Move size of tiles to r3
+	mov		r0, r5				// Move valPack X pos 
+	mov		r1, r6				// Move valPack Y Pos
+	ldr		r2, =#0xffffffff	// White
 	bl		drawRelSquare
 	
 	str		r6, [r4, #valPkY]
-	
+
 	
 mvValPkStop:
-	pop		{r4-r6, pc}
+	pop		{r4-r7, pc}
 
 
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+destroyValPk:					// Erases and resets the value pack
+	push	{ r4-r5, lr }
+	ldr		r4, =gameState
+	
+	bl		getTileSize
+	mov		r3, r0
+	ldr		r0, [r4, #valPkX]
+	ldr		r1, [r4, #valPkY]
+	ldr		r2, =0xff000000			// Black
+	bl		drawRelSquare			// Erase ValuePack
+	
+	mov		r0, #0					// Reset ValuePack 
+	str		r0, [r4, #valPkX]
+	str		r0, [r4, #valPkY]
+	strb	r0, [r4, #valPk]
+	
+	pop		{ r4-r5, pc }
+	
+	
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
@@ -371,17 +400,27 @@ bounceVert:							//flips verticle direction of ball
 
 decrementBrick:							//reduce hardness of brick and init value pack stuff
 										// Increments the Score Counter
-	push	{r4 - r5, lr}
+	push	{r4-r6, lr}
 @r0 - tile number
 	ldr		r4, =gameState
+	mov		r6, r0				// Store tile number in r6
+	mov		r0, #5
+	bl		incScore
 	
-	ldr		r5, [r4, #score]			// Increase Score by 1
-	add		r5, #1
-	str		r5, [r4, #score]
+	        
+	ldrb	r5, [r4, #numBricks]		// Decrease Brick Counter
+	sub		r5, #1
+	strb	r5, [r4, #numBricks]
 	
-		
+	cmp		r5, #0
+	bGT		decBrkNext
+	mov		r5, #1					// Set win condition
+	strb	r5, [r4, #event]
+	
+decBrkNext:
+	
 	add		r4, #gameMap
-	mov		r5, r0
+	mov		r5, r6
 	
 	ldrb		r2, [r4, r5]
 	//VALUE PACK COMPS
@@ -401,7 +440,7 @@ decrementBrick:							//reduce hardness of brick and init value pack stuff
 	bl		drawTile
 	
 	bl		clearTopScreen				// Clear the Score Screen
-	pop		{r4-r5, pc}
+	pop		{r4-r6, pc}
 
 
 decrementValPk:
@@ -423,7 +462,7 @@ decVPEnd:
 	mov		r1, r5
 	bl		drawTile
 	bl		clearTopScreen				// Clear the Score Screen
-	pop		{r4-r5, pc}
+	pop		{r4-r6, pc}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -433,12 +472,12 @@ decVPEnd:
 mvPaddle:								//move paddle 1 pixel at a time speed amt of times
 	@ r0 - direction: -1, 0, 1
 	@ r1 - speed/amt of loop
-	cmp		r0, #0
-	bxeq	lr
-	cmp		r1, #0				//insta return conditions
-	bxle	lr
-	
 	push	{r4-r7, lr}
+	cmp		r0, #0
+	bEQ		padEnd
+	cmp		r1, #0				//insta return conditions
+	bLE		padEnd
+	
 	mov		r4, r0
 	mov		r5, r1
 	
@@ -460,7 +499,7 @@ mvPadRgt:
 	bl		checkTilePaddle
 	cmp		r0, #-1			//if tile wall
 	subeq	r7, #1
-	beq		mvPadRet
+	beq		padEnd
 	str		r7, [r6, #padX]		// if not
 	b		mvPaddleTest
 
@@ -471,16 +510,15 @@ mvPadLft:
 	bl		checkTilePaddle
 	cmp		r0, #-1			//if tile wall
 	addeq	r7, #1
-	beq		mvPadRet
+	beq		padEnd
 	str		r7, [r6, #padX]
 	
 mvPaddleTest:
 	subs	r5, #1
 	bNE		paddleTop
 	
-mvPadRet:
-	mov		r0, r7
-	bl		drawPaddle
+padEnd:
+	bl		checkPadValPk
 	pop		{r4-r7, pc}
 
 
@@ -489,6 +527,7 @@ mvPadRet:
 
 checkTilePaddle:	//doesnt do the tile thing
 					//checks if paddle will exceed wall boundries
+					// returns -1 if invalid move
 	push	{r4, lr}
 	mov		r4, r0
 	bl		getTileSize
@@ -504,4 +543,47 @@ checkTilePaddle:	//doesnt do the tile thing
 	movGE	r0, #-1
 	
 	pop		{r4, pc}
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+checkPadValPk:
+// Checks if the paddle has collided with a value pack
+// returns 0 if not, 1 if it has
+
+	push	{ r4-r10, lr }
+	ldr		r10, =gameState
+	
+	ldr		r4, [r10, #padX]		// Find Left side of Paddle
+	ldrb	r5, [r10, #padOff3]	
+	add		r5, r4				// Find right side of Paddle
+	
+	mov		r6, #padY
+	
+	ldr		r7, [r10, #valPkX]	// Find left side of value pack
+	add		r8, r7, #10			// Find right side of value pack
+	
+	ldr		r9, [r10, #valPkY]	
+	add		r9, #32				// Find bottom of Value Pack
+padvaltest:
+	cmp		r6, r9
+	bGT		noCollision			// See if ValuePack is at correct height
+	
+	cmp		r5, r7				// See if ValuePack is to the right of the paddle
+	bLT		noCollision
+	
+	cmp		r4, r8				// See if Value pack is to the left of the paddle
+	bGT		noCollision
+	
+// If none of these, collision must have occurred
+	bl 		destroyValPk
+	mov		r0, #50
+	bl		incScore		// Increase score by 50 and draw on screen
+	
+	mov		r0, #1					// Return a collision
+	
+noCollision:
+	pop		{ r4-r10, pc }
+
+
 
