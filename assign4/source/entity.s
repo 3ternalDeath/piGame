@@ -70,15 +70,34 @@ mvValPkNext:
 	
 	add		r6, #1				// Increase the Y value
 	
-	bl		getTileSize			// Draw Value Pack White
+//	Find what kind of value pack it is
+	ldrb	r0, [r4, #valPk]
+	cmp		r0, #2				// If 1, increase paddle size
+	bEQ		paddleSize			// If 2, slow down ball speed
+	
+
+	
+ballSpeed:
+
+	bl		getTileSize			// Draw Value Pack 
 	mov		r3, r0				// Move size of tiles to r3
 	mov		r0, r5				// Move valPack X pos 
 	mov		r1, r6				// Move valPack Y Pos
-	ldr		r2, =#0xffffffff	// White
+	ldr		r2, =#0xFF0F7D25	// Dark Green
 	bl		drawRelSquare
 	
 	str		r6, [r4, #valPkY]
-
+	b		mvValPkStop
+	
+paddleSize:
+	bl		getTileSize			// Draw Value Pack 
+	mov		r3, r0				// Move size of tiles to r3
+	mov		r0, r5				// Move valPack X pos 
+	mov		r1, r6				// Move valPack Y Pos
+	ldr		r2, =#0xffff0000	// Red
+	bl		drawRelSquare
+	
+	str		r6, [r4, #valPkY]
 	
 mvValPkStop:
 	pop		{r4-r7, pc}
@@ -404,7 +423,7 @@ decrementBrick:							//reduce hardness of brick and init value pack stuff
 @r0 - tile number
 	ldr		r4, =gameState
 	mov		r6, r0				// Store tile number in r6
-	mov		r0, #5
+	mov		r0, #2				// increase score by 2
 	bl		incScore
 	
 	        
@@ -442,6 +461,7 @@ decBrkNext:
 	bl		clearTopScreen				// Clear the Score Screen
 	pop		{r4-r6, pc}
 
+//////////////////////////////////////////////////////////////////////
 
 decrementValPk:
 	ldrb	r3, [r4, #valPk-gameMap]
@@ -497,7 +517,7 @@ mvPadRgt:
 	add		r0, r7				//Right edge +1
 	
 	bl		checkTilePaddle
-	cmp		r0, #-1			//if tile wall
+	cmp		r0, #-1				//if tile wall
 	subeq	r7, #1
 	beq		padEnd
 	str		r7, [r6, #padX]		// if not
@@ -508,7 +528,7 @@ mvPadLft:
 	mov		r0, r7
 	
 	bl		checkTilePaddle
-	cmp		r0, #-1			//if tile wall
+	cmp		r0, #-1				//if tile wall
 	addeq	r7, #1
 	beq		padEnd
 	str		r7, [r6, #padX]
@@ -549,8 +569,7 @@ checkTilePaddle:	//doesnt do the tile thing
 
 checkPadValPk:
 // Checks if the paddle has collided with a value pack
-// returns 0 if not, 1 if it has
-
+//	And activates appropriate value effects
 	push	{ r4-r10, lr }
 	ldr		r10, =gameState
 	
@@ -576,14 +595,53 @@ padvaltest:
 	bGT		noCollision
 	
 // If none of these, collision must have occurred
+	bl		valueEffect
 	bl 		destroyValPk
 	mov		r0, #50
 	bl		incScore		// Increase score by 50 and draw on screen
 	
-	mov		r0, #1					// Return a collision
 	
 noCollision:
 	pop		{ r4-r10, pc }
+	
+	
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+valueEffect:
+	push	{ r4-r5, lr }
+	ldr		r4, =gameState
+	ldrb	r5, [r4, #valPk]	
+	
+	cmp		r5, #1
+	bNE		effectNext
+	
+	mov		r0, #3				// Set ball Speed to be 3
+	strb	r0, [r4, #ballSpd]
+	b		effectEnd
+
+effectNext:
+	mov		r0, #40
+	strb	r0, [r4, #padOff0]		// Set the offsets of the paddle
+	mov		r0, #80
+	strb	r0, [r4, #padOff1]	
+	
+	mov		r0, #120
+	strb	r0, [r4, #padOff3]	
+	mov		r0, #160
+	strb	r0, [r4, #padOff3]		
+	
+									// Make sure the paddle is not outside bounds
+	ldr		r0, [r4, #padX]
+	add		r0, #160
+	cmp		r0, #608
+	bLT		pdInBounds				// If the paddle is in bounds, ignore	
+	
+	mov		r0, #448
+	str		r0, [r4, #padX]			// Change the paddle x coord to be in bounds
+pdInBounds:
+effectEnd:		
+	pop		{ r4-r5, pc }
 
 
 

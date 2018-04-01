@@ -108,21 +108,22 @@ drawPaddle:
 	@ r0 - x pos relative to game
 	ldr		r2, =0xCCBBDD
 actualDrawPaddle:	
-	push	{ r4-r8, lr }
+	push	{ r4-r9, lr }
 	
 	mov		r5, #topLeftXGame
 	add		r0, r5
 	
 	mov		r1, #paddleY
 	
-	mov		r3, #PADDLE_SIZE_DEFAULT
+	ldr		r3, =gameState
+	ldrb	r9, [r3, #padOff3]
 	mov		r8, #10	// height counter
 
 
 	mov 	r4, r0	// x
 	mov 	r5, r1	// y
 	mov 	r6, r2	// colour
-	mov 	r7, r3 	// width
+	mov 	r7, r9 	// width
 
 	
 	paddle_top:
@@ -138,7 +139,7 @@ actualDrawPaddle:
 	addNE	r5, #1
 	bNE		paddle_top
 	
-	pop { r4-r8, pc } 
+	pop { r4-r9, pc } 
 ///////////////////////////////////////////////get sum(some) stuff
 .global getTileSize
 getTileSize:

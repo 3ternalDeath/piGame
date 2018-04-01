@@ -20,64 +20,62 @@ map1:
 	.endr
 	//first line of tiles
 	
-	//3 lines of emptyness
-	.rept	3
+	//4 lines of emptyness
+	.rept	4
 		.byte 	255
 		.rept 	18
 			.byte	0 
 		.endr
 		.byte	255
 	.endr
-
-	//2 lines of HARD bricks
-	.rept	2
-		.byte 	255
-		.byte	12
-		.rept 	16
-			.byte	4 
-		.endr
-		.byte	8
-		.byte	255
-	.endr
 	
-	//1 line of easy bricks
+	
+	// 1 lines medium bricks
+
 	.byte 	255
 	.rept 	18
-		.byte	1 
+		.byte	2 
 	.endr
 	.byte	255
-	
-	//2 lines of hard bricks
-	.rept	2
+
+	//1 lines of hard bricks
 		.byte 	255
 		.rept 	18
 			.byte	3 
 		.endr
 		.byte	255
-	.endr
-	
-	//4 lines of alternating meh and easy bricks
-	.rept	2
-		.byte 	255
+	// 1 line of empty
+	.byte 	255
 		.rept 	18
-			.byte	2 
+			.byte	0
 		.endr
 		.byte	255
-		.byte 	255
+	
+	// l 1ines medium bricks
+
+	.byte 	255
+	.rept 	18
+		.byte	2 
+	.endr
+	.byte	255
+	
+	// 1 line of easy bricks
+	.byte 	255
 		.rept 	18
 			.byte	1 
 		.endr
 		.byte	255
-	.endr
-	
+		
+	//	1 line of easy valuepack bricks
 	.byte 	255
-		.rept 	18
-			.byte	5 
+		.rept 	9
+			.byte	5
+			.byte	9 
 		.endr
-		.byte	255
+	.byte	255
 	
-	//10 lines of empty
-	.rept	10
+	//13 lines of empty
+	.rept	13
 		.byte 	255
 		.rept 	18
 			.byte	0 

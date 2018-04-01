@@ -94,7 +94,7 @@ mainChkLoop:
 	b		Start
 
 mainNotWin:
-    mov 	r0, #17500			// controls game speed
+    mov 	r0, #10500			// controls game speed
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -226,20 +226,7 @@ loseLife:
 	
 lifeNext:			
 
-	mov		r3, #315
-	str		r3, [r0, #ballX]
-		
-	mov		r3, #655
-	str		r3, [r0, #ballY]
-		
-	mov		r3, #2		
-	strb		r3, [r0, #ballSpd]
-		
-	mov		r3, #45
-	strb		r3, [r0, #ballAng]
-		
-	mov		r3, #3
-	strb		r3, [r0, #ballDir]
+	bl		initBall
 	bl		clearTopScreen
 	pop		{ pc }
 
@@ -279,6 +266,7 @@ initGameTest:
 		mov		r2, #125		@500/4
 		
 GameInitTop:
+		push		{lr}
 		ldr		r3, [r0], #4		// Initialize Bricks
 		str		r3, [r1], #4
 		subs	r2, #1
@@ -301,22 +289,8 @@ GameInitTop:
 		mov		r3, #100
 		str		r3, [r1, #padOff3]
 		
-		mov		r3, #315
-		str		r3, [r1, #ballX]
 		
-		mov		r3, #655
-		str		r3, [r1, #ballY]
-		
-		mov		r3, #2		
-		str		r3, [r1, #ballSpd]
-		
-		mov		r3, #45
-		str		r3, [r1, #ballAng]
-		
-		mov		r3, #3
-		str		r3, [r1, #ballDir]
-		
-		mov		r3, #99
+		mov		r3, #5
 		str		r3, [r1, #lives]
 		
 		mov		r3, #0
@@ -329,14 +303,32 @@ GameInitTop:
 		str		r3, [r1, #valPkX]
 		str		r3, [r1, #valPkY]
 		
-
-		bx		lr
+		bl initBall				// initialize ball values
+		pop		{pc}
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-	
+.global initBall
+initBall:
+// Set ball it its initial position
+	ldr		r0, =gameState
+	mov		r3, #315
+	str		r3, [r0, #ballX]
+		
+	mov		r3, #655
+	str		r3, [r0, #ballY]
+		
+	mov		r3, #4
+	strb	r3, [r0, #ballSpd]
+		
+	mov		r3, #45
+	strb	r3, [r0, #ballAng]
+		
+	mov		r3, #3
+	strb	r3, [r0, #ballDir]
 
+	bx 	lr
 
 	
 @ Data section
@@ -352,7 +344,7 @@ gameState:
 	.byte	0				// ballangle
 	.byte	0				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
-	.byte	0				// valupack, 0 if inactive, 1 if speed down, 2 if enlarge
+	.byte	0				// valupack, 0 if inactive, If 1, speed down, if 2 paddle size inc.
 	.int	0				// score
 	.int	0				// lives
 	.byte	0				// event, 0 = normal, 1 = win, 2 = lose
