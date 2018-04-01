@@ -153,37 +153,8 @@ getBallSize:
 getPadY:
 	mov	r0, #padY
 	bx  lr
-////////////////////////////////////////////////////////	
-@Deprecated
-drawBrick:
-	@ r0 - x pos relative to game
-	@ r1 - y pos relative to game
-	@ r2 - Colour
-	@ r3 - width
-	@ r4 - length
-	push	{ r4-r8, lr }
-	
-	mov		r5, #topLeftXGame
-	add		r0, r5
-	mov		r5, #topLeftYGame
-	add		r1, r5
-	mov		r3, #50
-	mov		r4, #25
-	bl		drawSquare
-	
-	pop 	{ r4-r8, pc }
-//////////////////////////////////////////////////////////
-@Deprecated
-drawBack:
-	push	{ r4-r8, lr }
-	mov		r0, #topLeftXGame		@ x
-	mov		r1, #topLeftYGame		@ y	
-	ldr		r2, =0x0 			@ Black
-	mov		r3, #800			@ width
-	mov		r4, #600			@ length
-	bl		drawSquare
-	
-	pop		{ r4-r8, pc }
+
+
 
 //////////////////////////////////////////////////////////////
 .global drawTile

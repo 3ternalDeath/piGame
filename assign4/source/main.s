@@ -31,20 +31,37 @@ main:
 	bl		snesSetup
 
 //MAIN MENUE STUFF HERE
-
+.global Start
+Start:
+	mov		r0, #60000		// Give it a pause for buttons to reset
+	bl 		delayMicroseconds
 	bl		GameMenu
-	bl		initMap
 	
+.global startGame
+startGame:
+	mov		r0, #60000		// Give it a pause for buttons to reset
+	bl 		delayMicroseconds
+	bl		initGame
 	bl		fullMapDraw
 	
 mainGameLoop:
 	bl		Read_SNES
 	tst		r0, #0x100		// If start is pressed go to pause menu
+	bEQ		mainGameLoopNext
 	blNE 	PauseMenu
 	
+	cmp	r0, #1				// return to menu screen
+	
+	bEQ		Start
+	
+	cmp	r0, #0				// Restart Game
+	bEQ		startGame
+
+mainGameLoopNext:	
+	
 	bl		update
-  
-    
+	bl		DrawScore			// Draw Player Score to Screen
+	
     mov 	r0, #20000
     bl		delayMicroseconds
     
@@ -284,9 +301,15 @@ bPadMiss:
 	pop		{r4-r5, pc}
 ///////////////////////////////////////////
 decrementBrick:							//reduce hardness of brick and init value pack stuff
+										// Increment the Score Counter
 	push	{r4 - r5, lr}
 @r0 - tile number
 	ldr		r4, =gameState
+	
+	ldr		r5, [r4, #score]
+	add		r5, #1
+	str		r5, [r4, #score]
+	
 	add		r4, #gameMap
 	mov		r5, r0
 	
@@ -302,7 +325,7 @@ decrementBrick:							//reduce hardness of brick and init value pack stuff
 	
 	sub		r2, #1
 	strb	r2, [r4, r5]
-	
+
 	mov		r0, r4
 	mov		r1, r2
 	bl		drawTile
@@ -578,57 +601,74 @@ cordToTile:
 	bx		lr
 /////////////////////////////////////////
 
-initMap:					//copy map from file to gameMap
+initGame:					// copy map from file to gameMap
+							// Then initialize the State variables
+		
 		ldr		r0, =map1
 		ldr		r1, =gameState
 		add		r1, #numBricks
-		
 		ldr		r3, [r0], #1	@num bricks
 		str		r3, [r1], #1
 		
 		mov		r2, #125		@500/4
 		
-mapInitTop:
-		ldr		r3, [r0], #4
+GameInitTop:
+		ldr		r3, [r0], #4		// Initialize Bricks
 		str		r3, [r1], #4
 		subs	r2, #1
-		bne		mapInitTop
+		bne		GameInitTop
+		
+										// Initialize Game State Vars
+		ldr		r1, =gameState
+		mov		r3, #270
+		str		r3, [r1, #padX]
+
+		mov		r3, #25
+		str		r3, [r1, #padOff0]
+	
+		mov		r3, #50
+		str		r3, [r1, #padOff1]
+		
+		mov		r3, #75
+		str		r3, [r1, #padOff2]
+		
+		mov		r3, #100
+		str		r3, [r1, #padOff3]
+		
+		mov		r3, #315
+		str		r3, [r1, #ballX]
+		
+		mov		r3, #655
+		str		r3, [r1, #ballY]
+		
+		mov		r3, #2		
+		str		r3, [r1, #ballSpd]
+		
+		mov		r3, #45
+		str		r3, [r1, #ballAng]
+		
+		mov		r3, #3
+		str		r3, [r1, #ballDir]
+		
+		mov		r3, #1
+		str		r3, [r1, #lives]
+		
+		mov		r3, #0
+		str		r3, [r1, #valPk]
+		mov		r3, #0
+		str		r3, [r1, #score]
+		mov		r3, #0
+		str		r3, [r1, #event]
+		str		r3, [r1, #bigPad]
+		str		r3, [r1, #valPkX]
+		str		r3, [r1, #valPkY]
+		str		r3, [r1, #numBricks]
+		
 
 		bx		lr
 ////////////////////////////////////////////////	
 
-GameMenu:					//i cant comment this i didnt make it!
-		push { r4, lr }
-		ldr		r0, =menuImg
-		bl		DrawScreen
-		mov		r4, #0
-		bl		DrawArrow
-MenuChkLoop:
-		bl Read_SNES
-		cmp		r0, #0
-		beq		MenuChkLoop		// loop until input is given
-GameMenuLoop:
-
-		tst		r0, #0x8		// But-A
-		bEQ		MenuNext
-		
-		cmpNE	r4, #1
-		bEQ		MenuEnd
-MenuNext:	
-		tst 	r0,	#0x80 		// Pad-Up
-		movNE 	r4, #1
-		
-		tst r0, 	#0x40		// Pad-Down
-		movNE		r4, #0
-		
-		mov 	r0, r4
-		bl		DrawArrow
-		mov		r0, r4
-		bl		EraseArrow
-		b 		MenuChkLoop
-
-MenuEnd:	
-		pop { r4, pc }
+	
 
 
 	
@@ -636,19 +676,18 @@ MenuEnd:
 .section .data
 .global gameState
 gameState:
-//NEED TO INIT SOME OF THESE
 
-	.int	270				// paddleX(left most RELITIVE pixil)
-	.byte 	25, 50, 75, 100	// paddleoff
-	.int 	315				// ballX(top left RELITIVE pixil)
-	.int	675				// ballY(top left RELITIVE pixil)
-	.byte	1				// ballspeed
-	.byte	45				// ballangle
-	.byte	3				// balldirection
+	.int	0				// paddleX(left most RELITIVE pixil)
+	.byte 	0, 0, 0, 0	// paddleoff
+	.int 	0				// ballX(top left RELITIVE pixil)
+	.int	0				// ballY(top left RELITIVE pixil)
+	.byte	0				// ballspeed
+	.byte	0				// ballangle
+	.byte	0				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	.byte	0				// valupack, 0 if inactive, 1 if speed down, 2 if enlarge
 	.int	0				// score
-	.int	1				// lives
+	.int	0				// lives
 	.byte	0				// event, 0 = normal, 1 = win, 2 = lose
 	.byte	0				// bigPaddle, 0 if not, 1 if yes
 	.int	0				// valPkX
