@@ -1,3 +1,5 @@
+@ Contains code to operate menus
+
 .section .text
 
 /////////////////////////////////////
@@ -89,7 +91,8 @@ PauseEnd:
 .global GameMenu
 GameMenu:
 		push { r4, lr }
-
+		mov		r0, #60000		// Give it a pause for buttons to reset
+		bl 		delayMicroseconds
 		mov		r4, #0
 		ldr		r0, =menuImg
 		bl		DrawScreen

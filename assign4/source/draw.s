@@ -1,4 +1,4 @@
-
+@ Contains code for drawing to game screen
 ////////////////CONFIG////////////////////////
 
 .equ	TOP_LEFT_X,	50
