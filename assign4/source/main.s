@@ -26,42 +26,42 @@
 //////////////////////////////////////////////////////////////////////
 
 .global main
-main:
+main:					// Initialize the snes and framebuffer
 	@ ask for frame buffer information
 	ldr 	r0, =frameBufferInfo 	@ frame buffer information structure
 	bl		initFbInfo
 	bl		snesSetup
 
-//MAIN MENUE STUFF HERE
+
 .global Start
-Start:
+Start:						// Start with the Game Menu
 	mov		r0, #60000		// Give it a pause for buttons to reset
 	bl 		delayMicroseconds
 	bl		GameMenu
 	
 .global startGame
-startGame:
+startGame:					// Initialize the Game
 	mov		r0, #60000		// Give it a pause for buttons to reset
 	bl 		delayMicroseconds
-	bl		initGame
-	bl		fullMapDraw
+	bl		initGame		// Set initial game values
+	bl		fullMapDraw		// Draw Game
 	
 mainGameLoop:
 	bl		Read_SNES
-	tst		r0, #0x100		// If start is pressed go to pause menu
+	tst		r0, #0x100			// If start is pressed go to pause menu
 	bEQ		mainGameLoopNext
-	blNE 	PauseMenu
+	blNE 	PauseMenu			// If start is pressed return a value if a selection is chosen in the pause menu
+								
+	cmp	r0, #1					// return to menu screen
 	
-	cmp	r0, #1				// return to menu screen
+	bEQ		Start				// Return to Menu
 	
-	bEQ		Start
-	
-	cmp	r0, #0				// Restart Game
+	cmp	r0, #0					// Restart Game
 	bEQ		startGame
 
 mainGameLoopNext:	
 	
-	bl		update
+	bl		update				// Update Ball, Paddle, and Value packs
 	bl		DrawScore			// Draw Player Score to Screen
 	
 
@@ -75,26 +75,25 @@ mainGameLoopNext:
 	bl		DrawScreen
 	b		mainChkLoop
 
-	
 mainNotLose:
 
-	cmp		r2, #1				// If event is 2, show lost screen
+	cmp		r2, #1				// If event is 1, show win screen
 	bNE		mainNotWin
 	
 	ldr		r0, =GameWonImg
 	bl		DrawScreen
-	b		mainChkLoop
+	b		mainChkLoop			
 	
 mainChkLoop:
 	bl 		Read_SNES
-	cmp		r0, #0
-	beq		mainChkLoop		// loop until input is given
-	mov		r0, #60000		// Give it a pause for buttons to reset
+	cmp		r0, #0					// Once a button is pressed, return to menu screen
+	beq		mainChkLoop				// loop until input is given
+	mov		r0, #60000				// Give it a pause for buttons to reset
 	bl 		delayMicroseconds
 	b		Start
 
 mainNotWin:
-    mov 	r0, #10500			// controls game speed
+    mov 	r0, #11000				// controls game speed
     bl		delayMicroseconds
     
 	b		mainGameLoop
@@ -108,85 +107,65 @@ mainNotWin:
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-update:							//called every cycle, basicly game transition
+update:							//called every cycle, basicly the game transition
 	push	{r4, lr}
 	
 	mov		r4, r0
 	mov		r0, #0
 	
-	tst		r4, #0x8		//A
-	moveq	r1, #4			//speed 1
-	movne	r2, #5			//speed 2
+	tst		r4, #0x8		// A
+	moveq	r1, #4			// speed 1		// The paddle speed if A is not held
+	movne	r2, #5			// speed 2		// The paddle speed if A is held
 
-	tst		r4, #0x10		//RIGHT
+	tst		r4, #0x10		//RIGHT			// Test for d-pad right
 	movne	r0, #1
 	
-	tst		r4, #0x20		//LEFT
+	tst		r4, #0x20		//LEFT			// Test for d-pad left
 	movne	r0, #-1
 	
 							//left and right are mutually exclusive due to
 							//construction of snes
 	//MUST MOVE PADDLE FIRST
-	bl		mvPaddle		
-	//OTHER MOVES
-	bl		mvValPk
+	bl		mvPaddle		// Update paddle pos
 	
-				
-	ldr		r1, =gameState
-	ldr		r0, [r1, #padX]
-	bl		drawPaddle
+	
+	//OTHER MOVES
+	bl		mvValPk			//	If value pack is active, update
+	
+
 	//MUST MOVE BALL LAST
 	bl		mvBall
 	
+					
+	ldr		r1, =gameState
+	ldr		r0, [r1, #padX]
+	bl		drawPaddle		// Draw Paddle to screen (so it is overtop of the ball and valuepacks)
 	pop		{r4, pc}
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-bounceRev:							//never used... for real
-									//sends ball back the way it came
-	ldr		r0, = gameState
-	ldrb		r1, [r0, #ballDir]
-	
-	cmp		r1, #1
-	movLE	r2, #4
-	
-	cmp		r1, #2
-	movEQ	r2, #3
-	
-	cmp		r1, #3
-	movEQ	r2, #2
-	
-	cmp		r1, #4
-	movGE	r2, #1
-	
-	strb		r2, [r0, #ballDir]
-	
-	bx		lr
-
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-
-
 
 .global tileToCord
-tileToCord:					//convert from tile number to x-y coords
+tileToCord:					// Finds coords for the top left corner for a given tile 
 @ r0 - tile number
+
 	push	{lr}
 	mov		r1, r0
-	bl		getTileSize
+	bl		getTileSize		
 	mov		r2, #0
-	b		TTCTest
+	b		TTCTest			// Go to test 
+	
 TTCTop:
 	add		r2, #1
 	sub 	r1, #20
 TTCTest:
 	cmp 	r1, #20
-	bGT 	TTCTop
+	bGT 	TTCTop			// If Tile number is over 20 (the num of cols) loop
 	
 	bl		getTileSize
 	mov		r3, r0
-	mul		r0, r1, r3
+	mul		r0, r1, r3		// mul by the tile size to get proper coords
 	mul		r1, r2, r3
 	
 	pop		{pc}
@@ -194,7 +173,7 @@ TTCTest:
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-.global cordToTile			//convert from coords to tile number
+.global cordToTile			// Finds the tile who contains the given coords
 cordToTile:
 @ r0 -x
 @ r1 -y
@@ -211,7 +190,8 @@ cordToTile:
 //////////////////////////////////////////////////////////////////////
 
 .global loseLife
-loseLife:
+loseLife:						// Decrements life counter
+								// Sets event to lose if lives == 0
 	push	{ lr }
 	ldr		r0, =gameState
 	ldr		r1, [r0, #lives]
@@ -223,19 +203,18 @@ loseLife:
 	mov		r1, #2				// Set event to 2	
 	strb	r1, [r0, #event]	// meaning event is in loss condition
 	
-	
 lifeNext:			
 
-	bl		initBall
-	bl		clearTopScreen
+	bl		initBall			// Reinitialize the ball to starting position and speed
+	bl		clearTopScreen		// clear the score and life screen
 	pop		{ pc }
 
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
-// Increases score and draws it to screen
+
 .global incScore
-incScore:
+incScore:							// Increases score by the given amount and draws it to screen
 @ r0 - amount to increase score by
 	push	{ r4-r5, lr }
 	mov		r4, r0
@@ -276,28 +255,23 @@ GameInitTop:
 		ldr		r1, =gameState
 		mov		r3, #270
 		str		r3, [r1, #padX]
-
 		mov		r3, #25
 		str		r3, [r1, #padOff0]
-	
 		mov		r3, #50
 		str		r3, [r1, #padOff1]
-		
 		mov		r3, #75
 		str		r3, [r1, #padOff2]
-		
 		mov		r3, #100
 		str		r3, [r1, #padOff3]
 		
-		
-		mov		r3, #5
+		mov		r3, #5					// Player starts with 5 lives
 		str		r3, [r1, #lives]
 		
 		mov		r3, #0
 		str		r3, [r1, #valPk]
-		mov		r3, #0
+		mov		r3, #0					// There is no active value pack
 		str		r3, [r1, #score]
-		mov		r3, #0
+		mov		r3, #0					// Start with 0 score
 		str		r3, [r1, #event]
 		str		r3, [r1, #bigPad]
 		str		r3, [r1, #valPkX]
@@ -316,7 +290,7 @@ initBall:
 	mov		r3, #315
 	str		r3, [r0, #ballX]
 		
-	mov		r3, #655
+	mov		r3, #635
 	str		r3, [r0, #ballY]
 		
 	mov		r3, #4
@@ -336,15 +310,15 @@ initBall:
 .global gameState
 gameState:
 
-	.int	0				// paddleX(left most RELITIVE pixil)
-	.byte 	0, 0, 0, 0	// paddleoff
-	.int 	0				// ballX(top left RELITIVE pixil)
-	.int	0				// ballY(top left RELITIVE pixil)
+	.int	0				// paddleX(left most RELATIVE pixil)
+	.byte 	0, 0, 0, 0		// paddleoffsets
+	.int 	0				// ballX(top left RELATIVE pixil)
+	.int	0				// ballY(top left RELATIVE pixil)
 	.byte	0				// ballspeed
 	.byte	0				// ballangle
 	.byte	0				// balldirection
 							@  1 = down right, 2 = down left, 3 = up right, 4 = up left
-	.byte	0				// valupack, 0 if inactive, If 1, speed down, if 2 paddle size inc.
+	.byte	0				// valupack, 0 if inactive, If 1 speed down, if 2 paddle size inc.
 	.int	0				// score
 	.int	0				// lives
 	.byte	0				// event, 0 = normal, 1 = win, 2 = lose
@@ -353,7 +327,7 @@ gameState:
 	.int	0				// valPkY
 	.byte	0				// numBricks
 	.rept	500				// game map 20*25 tiles
-		.byte 0
+	.byte 0
 	.endr
 
 //.equ name, val

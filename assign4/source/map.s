@@ -1,3 +1,5 @@
+@ Contains the data for the map
+
 .section .text
 //0 = floor
 //255 = wall
@@ -10,17 +12,19 @@
 //5 = valPk1, 1 more hit
 //...
 //9 = valPk2, 1 more hit
+
+
 .global map1
 map1:
 	.byte	162
 
-	//first line of tiles
+						//first line of tiles
 	.rept 20 
 		.byte 254 
 	.endr
-	//first line of tiles
+						//first line of tiles
 	
-	//4 lines of emptyness
+						//4 lines of emptyness
 	.rept	4
 		.byte 	255
 		.rept 	18
@@ -30,7 +34,7 @@ map1:
 	.endr
 	
 	
-	// 1 lines medium bricks
+						// 1 lines medium bricks
 
 	.byte 	255
 	.rept 	18
@@ -38,20 +42,20 @@ map1:
 	.endr
 	.byte	255
 
-	//1 lines of hard bricks
+						//1 lines of hard bricks
 		.byte 	255
 		.rept 	18
 			.byte	3 
 		.endr
 		.byte	255
-	// 1 line of empty
+						// 1 line of empty
 	.byte 	255
 		.rept 	18
 			.byte	0
 		.endr
 		.byte	255
 	
-	// l 1ines medium bricks
+						// l 1ines medium bricks
 
 	.byte 	255
 	.rept 	18
@@ -59,14 +63,14 @@ map1:
 	.endr
 	.byte	255
 	
-	// 1 line of easy bricks
+						// 1 line of easy bricks
 	.byte 	255
 		.rept 	18
 			.byte	1 
 		.endr
 		.byte	255
 		
-	//	1 line of easy valuepack bricks
+						//	1 line of easy valuepack bricks
 	.byte 	255
 		.rept 	9
 			.byte	5
@@ -83,7 +87,7 @@ map1:
 		.byte	255
 	.endr
 	
-	//1 line of death
+					//1 line of death
 	.byte	255
 	.rept	18
 		.byte	253

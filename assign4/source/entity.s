@@ -139,61 +139,61 @@ mvBall:							//moving and bouncing of the ball
 ballTop:
 	ldrb	r0, [r4, #ballDir]
 	ldrb	r1, [r4, #ballAng]
-	bl		getBallOffsets
+	bl		getBallOffsets			// Find ball offsets based on direction and angle
 	mov		r6, r0
 	mov		r7, r1
 	
 	ldr		r0, [r4, #ballX]
 	ldr		r1, [r4, #ballY]
-	bl		unDrawBall
+	bl		unDrawBall				// Cover the old ball position
 	
 	ldr		r0, [r4, #ballX]
 	add		r0, r6
 	ldr		r1, [r4, #ballY]
 	ldrb	r2, [r4, #ballDir]
 	add		r1, r7
-	bl		checkTileBall
+	bl		checkTileBall			// Check if the next pixel position to hit will be a tile
 	mov		r8, r1
 	cmp		r0, #0
 	beq		ballMVMbyGood				//bounces start
 										//always b to ball top to get new offsets when bouncing
 	cmp		r0, #255		//side wall
 	bNE		mvBlBnc1
-	bl		bounceHori
+	bl		bounceHori		// reflect in the x
 	b		ballTop
 
 mvBlBnc1:	
 	cmp		r0, #254		//roof
 	bNE		mvBlBnc2
-	bl		bounceVert
+	bl		bounceVert			// reflect in the y
 	b		ballTop
 
 mvBlBnc2:	
 	cmp		r0, #253		//lava
 	bNE		mvBlBnc3
 	bl		bounceVert
-	bl		loseLife
+	bl		loseLife		// Lose a life and reset ball
 	b		ballTop
 
 	
 mvBlBnc3:
 	mov		r8, r1
 	mov		r0, r8
-	bl		decrementBrick
+	bl		decrementBrick		// Decrease brick strength
 	mov		r0, r4
 	add		r0, #gameMap
 	mov		r1, r8
-	bl		drawTile
-	bl		bounceVert
+	bl		drawTile			
+	bl		bounceVert			// reflect ball in the y
 	b		ballTop
 	
-ballMVMbyGood:
+ballMVMbyGood:					// Check if the ball move is actually good
 	bl		getBallSize
 	mov		r8, r0
-	ldr		r1, [r4, #ballY]
+	ldr		r1, [r4, #ballY]		// Find BallY pos
 	add		r1, r7
 	add		r8, r1
-	bl		getPadY
+	bl		getPadY				
 	cmp		r8, r0
 	bLT		ballMVGood
 	add		r0, #2
@@ -207,7 +207,7 @@ ballMVMbyGood:
 	
 ballMVGood:	
 	ldr		r0, [r4, #ballX]
-	ldr		r1, [r4, #ballY]
+	ldr		r1, [r4, #ballY]			// Move the ball
 	add		r0, r6
 	add		r1, r7
 	str		r0, [r4, #ballX]
@@ -215,7 +215,7 @@ ballMVGood:
 	bl		drawBall
 
 	
-	subs	r5, #1
+	subs	r5, #1						// Repeate this speed (r5) times
 	bNE		ballTop
 	
 	
@@ -266,24 +266,24 @@ getBallOffsets:@returns r0 - x offset, r1 - y offset
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-checkTileBall:								//figure out what type of tile is directly in its way(only checks one corner)
-@ r0 - x									//if goint up/right only check top right corner...
+checkTileBall:						//figure out what type of tile is directly in its way(only checks one corner)
+@ r0 - x							//if goint up/right only check top right corner...
 @ r1 - y
-@ r2 - corner #
+@ r2 - corner # to be checked
 	push	{r4-r7, lr}
-	mov		r4, r0
-	mov		r5, r1
-	mov		r6, r2
+	mov		r4, r0			// x coord
+	mov		r5, r1			// y coord
+	mov		r6, r2			// corner #
 	ldr		r7, =gameState
 	add		r7, #gameMap
 	@  1 = down right, 2 = down left, 3 = up right, 4 = up left
 	bl		getBallSize
 	mov		r3, r0
 	
-	cmp		r6, #1
-	addEQ	r4, r3
-	addEQ	r5, r3
-	bEQ		checkTBEnd
+	cmp		r6, #1			// If corner 1
+	addEQ	r4, r3				
+	addEQ	r5, r3			// add size
+	bEQ		checkTBEnd		// Check the tile
 	
 	cmp		r6, #2
 	addEQ	r5, r3
@@ -305,7 +305,7 @@ checkTBEnd:
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-bouncePaddle:						//figures out wher ball goes when it hits paddle
+bouncePaddle:						//figures out where ball goes when it hits paddle
 	push	{r4-r5, lr}
 	ldr		r5, =gameState
 	ldr		r1, [r5, #ballX]
@@ -320,7 +320,7 @@ bouncePaddle:						//figures out wher ball goes when it hits paddle
 	
 	b		bPadHap
 	
-bPadMbyMiss:
+bPadMbyMiss:			// check if ball will miss
 	bl		getBallSize
 	add		r1, r0
 	cmp		r1, r2
@@ -330,16 +330,16 @@ bPadMbyMiss:
 	movGT	r0, #-1
 	bGT		bPadMiss
 	
-bPadHap:
+bPadHap:					//	hit on the inside
 	bl		getBallSize
 	lsl		r0, #1
 	add		r1, r0
 	ldr		r2, [r5, #padX]
-	ldrb	r3, [r5, #padOff1]
+	ldrb	r3, [r5, #padOff1]		
 	add		r3, r2
 	cmp		r1, r3
 	bLE		bPadL
-bPadR:
+bPadR:						// hit on the right outside
 	mov		r3, #3
 	strb	r3, [r5, #ballDir]
 	ldrb	r4, [r5, #padOff2]
@@ -348,7 +348,7 @@ bPadR:
 	movGT	r3, #45
 	movLE	r3, #60
 	b		bPadGud
-bPadL:
+bPadL:						// hit on the left outside
 	mov		r3, #4
 	strb	r3, [r5, #ballDir]
 	ldrb	r4, [r5, #padOff0]
@@ -358,7 +358,7 @@ bPadL:
 	movGE	r3, #60
 
 bPadGud:
-	strb	r3, [r5, #ballAng]
+	strb	r3, [r5, #ballAng]		// Change angle
 
 bPadMiss:
 	pop		{r4-r5, pc}
@@ -422,8 +422,8 @@ decrementBrick:							//reduce hardness of brick and init value pack stuff
 	push	{r4-r6, lr}
 @r0 - tile number
 	ldr		r4, =gameState
-	mov		r6, r0				// Store tile number in r6
-	mov		r0, #2				// increase score by 2
+	mov		r6, r0					// Store tile number in r6
+	mov		r0, #2					// increase score by 2
 	bl		incScore
 	
 	        
@@ -441,13 +441,14 @@ decBrkNext:
 	add		r4, #gameMap
 	mov		r5, r6
 	
-	ldrb		r2, [r4, r5]
+	ldrb		r2, [r4, r5]				// load value of brick
+	
 	//VALUE PACK COMPS
-	cmp		r2, #5
+	cmp		r2, #5					// if Brick is 5, spawn speed value pack 
 	movEQ	r2, #1
 	bEQ		decrementValPk
 	
-	cmp		r2, #9
+	cmp		r2, #9					// if Brick is 9, spawn paddle size value pack
 	movEQ	r2, #2
 	bEQ		decrementValPk 
 	
@@ -456,14 +457,14 @@ decBrkNext:
 
 	mov		r0, r4
 	mov		r1, r2
-	bl		drawTile
+	bl		drawTile					// Redrawn tile with new given strength
 	
 	bl		clearTopScreen				// Clear the Score Screen
 	pop		{r4-r6, pc}
 
 //////////////////////////////////////////////////////////////////////
 
-decrementValPk:
+decrementValPk:		// Moves the value pack downwards
 	ldrb	r3, [r4, #valPk-gameMap]
 	cmp		r3, #0
 	bNE		decVPEnd
@@ -472,7 +473,7 @@ decrementValPk:
 	
 	mov		r0, r5
 	bl		tileToCord
-	str		r0, [r4, #valPkX-gameMap]
+	str		r0, [r4, #valPkX-gameMap]		// Story new x and y values
 	str		r1, [r4, #valPkY-gameMap]
 	
 decVPEnd:
@@ -480,7 +481,7 @@ decVPEnd:
 	strb	r0, [r4, r5]
 	mov		r0, r4
 	mov		r1, r5
-	bl		drawTile
+	bl		drawTile					// Redraw tile
 	bl		clearTopScreen				// Clear the Score Screen
 	pop		{r4-r6, pc}
 
@@ -489,7 +490,7 @@ decVPEnd:
 //////////////////////////////////////////////////////////////////////
 
 .global mvPaddle
-mvPaddle:								//move paddle 1 pixel at a time speed amt of times
+mvPaddle:								//move paddle 1 pixel at a time, speed amt of times
 	@ r0 - direction: -1, 0, 1
 	@ r1 - speed/amt of loop
 	push	{r4-r7, lr}
@@ -517,10 +518,10 @@ mvPadRgt:
 	add		r0, r7				//Right edge +1
 	
 	bl		checkTilePaddle
-	cmp		r0, #-1				//if tile wall
+	cmp		r0, #-1				//if tile wall return -1
 	subeq	r7, #1
 	beq		padEnd
-	str		r7, [r6, #padX]		// if not
+	str		r7, [r6, #padX]		// if not a tile wall, store
 	b		mvPaddleTest
 
 mvPadLft:
@@ -528,14 +529,14 @@ mvPadLft:
 	mov		r0, r7
 	
 	bl		checkTilePaddle
-	cmp		r0, #-1				//if tile wall
+	cmp		r0, #-1				//if tile wall return -1
 	addeq	r7, #1
 	beq		padEnd
-	str		r7, [r6, #padX]
+	str		r7, [r6, #padX]		// if not a tile wall, store
 	
 mvPaddleTest:
-	subs	r5, #1
-	bNE		paddleTop
+	subs	r5, #1				// repeat speed (r5) times
+	bNE		paddleTop			
 	
 padEnd:
 	bl		checkPadValPk
@@ -545,7 +546,7 @@ padEnd:
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-checkTilePaddle:	//doesnt do the tile thing
+checkTilePaddle:	
 					//checks if paddle will exceed wall boundries
 					// returns -1 if invalid move
 	push	{r4, lr}
@@ -608,19 +609,19 @@ noCollision:
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
-valueEffect:
+valueEffect:					// Activates a valuePacks effects
 	push	{ r4-r5, lr }
 	ldr		r4, =gameState
 	ldrb	r5, [r4, #valPk]	
 	
-	cmp		r5, #1
+	cmp		r5, #1				// If a valuepack of '1'
 	bNE		effectNext
 	
-	mov		r0, #3				// Set ball Speed to be 3
+	mov		r0, #3					// Set ball Speed to be 3
 	strb	r0, [r4, #ballSpd]
 	b		effectEnd
 
-effectNext:
+effectNext:							// if a valuepack of '2'
 	mov		r0, #40
 	strb	r0, [r4, #padOff0]		// Set the offsets of the paddle
 	mov		r0, #80
@@ -631,14 +632,14 @@ effectNext:
 	mov		r0, #160
 	strb	r0, [r4, #padOff3]		
 	
-									// Make sure the paddle is not outside bounds
+									// Make sure the paddle is not outside bounds after growth
 	ldr		r0, [r4, #padX]
 	add		r0, #160
 	cmp		r0, #608
 	bLT		pdInBounds				// If the paddle is in bounds, ignore	
 	
 	mov		r0, #448
-	str		r0, [r4, #padX]			// Change the paddle x coord to be in bounds
+	str		r0, [r4, #padX]			// Shift the paddle x coord to be in bounds
 pdInBounds:
 effectEnd:		
 	pop		{ r4-r5, pc }

@@ -1,18 +1,21 @@
 @ Contains Code to Draw image-to-ascii pictures
 @ Code section
+
 .section .text
 
+.equ	TOP_LEFT_X,	50		// Offsets for drawing the screen
+.equ	TOP_LEFT_Y, 100		
 
-.equ	TOP_LEFT_X,	50
-.equ	TOP_LEFT_Y, 100
-.equ	score, 		20
+.equ	score, 		20		// GameState offsets
 .equ	lives, 		24
 
 
 
 ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
 .global DrawPause
-DrawPause:
+DrawPause:								// Draws the Pause menu
 @	r0 - Address of screen to print
 	push { r4-r10, lr }
 	
@@ -28,34 +31,35 @@ DrawPause:
 	mov r9, r4
 	mov r10, r5
 PauseLine$:
-	ldr		r0, =PauseMenuImg
+	ldr		r0, =PauseMenuImg			// Load Pause img to ascii picture
 	ldr	r2, [r0, r8, lsl #2]
 	mov	r0, r9
 	mov r1, r10
 	bl DrawPixel
 	
-	add	r9, #1
+	add	r9, #1							// Draws a horizontal line
 	add	r8, #1
 PauseLineTest$:
 	cmp	r9, r6
-	bLT PauseLine$
+	bLT PauseLine$						
 
-	add r10, #1
+	add r10, #1							// Increments to the next row of pixels
 	cmp r10, r7
 	movLE r9, r4
 	bLT  PauseLine$
 	
 	pop	{ r4-r10, pc }
 	
-/////////////////////
+////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
 
 .global DrawScreen
-DrawScreen:
+DrawScreen:								// Can draw given 900x640 images
 @	r0 - Address of screen to print
 	push { r4-r11, lr }
 	
 	mov	r11, r0
-	mov r4, #TOP_LEFT_X
+	mov r4, #TOP_LEFT_X					// Oriented for the top of the game screen
 	mov	r5, #TOP_LEFT_Y
 	
 	mov	r0, #640		// Width of img
@@ -67,29 +71,29 @@ DrawScreen:
 	mov r9, r4
 	mov r10, r5
 ScreenLine$:
-	ldr	r2, [r11, r8, lsl #2]
+	ldr	r2, [r11, r8, lsl #2]			// Load pixel colour
 	mov	r0, r9
 	mov r1, r10
 	bl DrawPixel
 	
-	add	r9, #1
-	add	r8, #1
-ScreenLineTest$:
+	add	r9, #1							// Draws a horizontal line
+	add	r8, #1							// Increment to next byte in address file
+ScreenLineTest$:	
 	cmp	r9, r6
 	bLT ScreenLine$
 
-	add r10, #1
+	add r10, #1							// Increments to the next row of pixels
 	cmp r10, r7
 	movLE r9, r4
 	bLT  ScreenLine$
 	
 	pop	{ r4-r11, pc }
-
+	
+////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-
 .global EraseArrow
-EraseArrow:
+EraseArrow:									// Draws a colour mask over where the pointer arrow was
 @ r0 - 0 Erases at quit, 1 erases at Start
 	push { r4-r10, lr }
 	
@@ -126,19 +130,21 @@ ErArrowLine$:
 	add	r8, #1
 ErArrowLineTest$:
 
-	cmp	r9, r6
+	cmp	r9, r6								// Draws a horizontal line
 	bLT ErArrowLine$
 
-	add r10, #1
+	add r10, #1								// Increments to the next row of pixels
 	cmp r10, r7
 	movLE r9, r4
 	bLT  ErArrowLine$
 	pop	{ r4-r10, pc }
 
 
-////////////////////////////////////////////
+////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
 .global DrawArrow
-DrawArrow:
+DrawArrow:									// Draws the arrow pointer image based on the given input
 @ r0 - 0 points to Start, 1 points to quit
 	push { r4-r10, lr }
 	
@@ -156,9 +162,9 @@ pointQuit:
 	add	r5, r0
 pointNext:
 	
-	mov	r0, #70		// Width of img
+	mov	r0, #70			// Width of img
 	add	r6, r4, r0		
-	mov	r0, #45		// Height of img
+	mov	r0, #45			// Height of img
 	add	r7, r5, r0		
 	mov r8, #0
 	
@@ -175,16 +181,17 @@ ArrowLine$:
 	add	r8, #1
 ArrowLineTest$:
 
-	cmp	r9, r6
+	cmp	r9, r6						// Draws a horizontal line
 	bLT ArrowLine$
 
 	add r10, #1
-	cmp r10, r7
-	movLE r9, r4
+	cmp r10, r7						// Increments to the next row of pixels
+	movLE r9, r4	
 	bLT  ArrowLine$
 	pop	{ r4-r10, pc }
 
-////////////////////////////////////////////////	
+////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
 
 .global DrawScore
 DrawScore:				// Draw the Player Score to the screen
@@ -194,37 +201,37 @@ DrawScore:				// Draw the Player Score to the screen
 	// Draw 'Lives:" to the Screen
 	mov			r0, #0
 	mov			r1, #40
-	mov			r2, #'L'
+	mov			r2, #'L'				// L
 	mov			r3, #3
 	bl			DrawChar
 	
 	mov			r0, #25
 	mov			r1, #40
-	mov			r2, #'i'
+	mov			r2, #'i'				// I
 	mov			r3, #3
 	bl			DrawChar
 	
 	mov			r0, #50
 	mov			r1, #40
-	mov			r2, #'v'
+	mov			r2, #'v'				// V
 	mov			r3, #3
 	bl			DrawChar
 	
 	mov			r0, #75
 	mov			r1, #40
-	mov			r2, #'e'
+	mov			r2, #'e'				// E
 	mov			r3, #3
 	bl			DrawChar
 	
 	mov			r0, #100
 	mov			r1, #40
-	mov			r2, #'s'
+	mov			r2, #'s'				// S
 	mov			r3, #3
 	bl			DrawChar
 	
 	mov			r0, #120
 	mov			r1, #40
-	mov			r2, #':'
+	mov			r2, #':'				// :
 	mov			r3, #3
 	bl			DrawChar
 	
@@ -243,37 +250,37 @@ DrawScore:				// Draw the Player Score to the screen
 	// Draw "Score:" to Screen
 	mov			r0, #0
 	mov			r1, #0
-	mov 		r2, #'S'
+	mov 		r2, #'S'			// S
 	mov 		r3, #3
 	bl			DrawChar
 	
 	mov			r0, #25
 	mov			r1, #0
-	mov			r2, #'c'
+	mov			r2, #'c'			// C
 	mov			r3, #3
 	bl			DrawChar
 	
 	mov			r0, #50
 	mov			r1, #0
-	mov			r2, #'o'
+	mov			r2, #'o'			// O
 	mov 		r3, #3
 	bl 			DrawChar
 		
 	mov			r0, #75
 	mov			r1, #0
-	mov			r2, #'r'
+	mov			r2, #'r'			//R
 	mov 		r3, #3
 	bl 			DrawChar
 	
 	mov			r0, #100
 	mov			r1, #0
-	mov			r2, #'e'
+	mov			r2, #'e'			//E
 	mov			 r3, #3
 	bl 			DrawChar
 	
 	mov			r0, #120
 	mov			r1, #0
-	mov			r2, #':'
+	mov			r2, #':'			// :
 	mov 		r3, #3
 	bl 			DrawChar
 	
@@ -285,7 +292,10 @@ DrawScore:				// Draw the Player Score to the screen
 	mov			r6, #0					// Hundreds Place
 	b 			ScoreTest
 	
-ScoreLoop:
+ScoreLoop:						// Turn score int into three digits
+// r6 - hundreds place
+// r5 - Tens place
+// r4 - Ones place
 	cmp		r4, #100
 	subGE	r4, #100
 	addGE	r6, #1
@@ -337,7 +347,8 @@ endScore:
 	pop		{r4-r7, pc}
 
 
-//////////////////////////////////////
+////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
 
 .global digitToAscii
 
@@ -384,8 +395,10 @@ digitToAscii:
 digitEnd:
 	bx lr
 	
-/////////////////////////////////////////////
-@ Draw the specified character to the location with size
+////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
+@ Draw the specified character to the location with specified size
 @ with respect to the game
 .global DrawChar
 DrawChar:
@@ -420,42 +433,42 @@ DrawChar:
 	str		r2, [fp, #charoff]
 	str		r3, [fp, #sizeoff]
 
-	ldr		chAdr, =font		@ load the address of the font map
-	ldr		r0, [fp, #charoff]		@ load the character into r0
-	add		chAdr,	r0, lsl #4	@ char address = font base + (char * 16)
+	ldr		chAdr, =font				@ load the address of the font map
+	ldr		r0, [fp, #charoff]			@ load the character into r0
+	add		chAdr,	r0, lsl #4			@ char address = font base + (char * 16)
 
-	ldr		py, [fp, #yoff]		@ init the Y coordinate (pixel coordinate)
+	ldr		py, [fp, #yoff]				@ init the Y coordinate (pixel coordinate)
 
 charLoop$:
-	ldr		px, [fp, #xoff]		@ init the X coordinate
+	ldr		px, [fp, #xoff]					@ init the X coordinate
 
-	mov		mask, #0x01		@ set the bitmask to 1 in the LSB
+	mov		mask, #0x01						@ set the bitmask to 1 in the LSB
 	
-	ldrb		row, [chAdr], #1	@ load the row byte, post increment chAdr
+	ldrb		row, [chAdr], #1			@ load the row byte, post increment chAdr
 
 rowLoop$:
-	tst		row,	mask		@ test row byte against the bitmask
+	tst		row,	mask					@ test row byte against the bitmask
 	beq		noPixel$
 
 	mov		r0, px
 	mov		r1, py
-	mov		r2, #0x00FF0000		@ red
+	mov		r2, #0x00FF0000					@ red
 	ldr		r3, [fp, #sizeoff]
-	bl		drawSquare		@ draw red pixel at (px, py)
+	bl		drawSquare						@ draw red pixel at (px, py)
 
 noPixel$:
 	ldr		r0, [fp, #sizeoff]			@ increment x coordinate by size
 	add		px, r0
-	lsl		mask, #1		@ shift bitmask left by 1
+	lsl		mask, #1					@ shift bitmask left by 1
 
-	tst		mask,	#0x100		@ test if the bitmask has shifted 8 times (test 9th bit)
+	tst		mask,	#0x100				@ test if the bitmask has shifted 8 times (test 9th bit)
 	beq		rowLoop$
 	
 	ldr		r0, [fp, #sizeoff]			@ increment y coordinate by the size
 	add		py, r0
 	
 	tst		chAdr, #0xF
-	bne		charLoop$		@ loop back to charLoop$, unless address evenly divisibly by 16 (ie: at the next char)
+	bne		charLoop$					@ loop back to charLoop$, unless address evenly divisibly by 16 (ie: at the next char)
 
 	.unreq	chAdr
 	.unreq	px
@@ -466,16 +479,18 @@ noPixel$:
 	add 	sp, #alloc
 	pop		{r4-r8, fp, pc}
 
-/////////////////////////////////////////////
+////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
 .global clearTopScreen
-clearTopScreen:
+clearTopScreen:					// Draws a black cover over the whole game screen
 	push	{r4-r7, lr}
 
 	mov		r4, #640
-	add		r4, #TOP_LEFT_X	// Find final pixel x
+	add		r4, #TOP_LEFT_X		// Find final pixel x
 	
 	mov		r5, #100
-	add		r5, #TOP_LEFT_Y	// Find final pixel y
+	add		r5, #TOP_LEFT_Y		// Find final pixel y
 	
 	mov		r6, #TOP_LEFT_X
 	mov		r7, #TOP_LEFT_Y
